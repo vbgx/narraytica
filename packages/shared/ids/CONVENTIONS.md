@@ -1,4 +1,3 @@
-cat > packages/shared/ids/CONVENTIONS.md <<'EOF'
 # ID & Foreign Key Conventions (Canonical)
 
 This document defines the **canonical identifier and foreign key conventions** across Narralytica.
@@ -124,5 +123,3 @@ For AI outputs:
 - Don’t expose internal numeric IDs in APIs
 - Don’t encode semantics inside IDs
 - Don’t create ad-hoc relationship columns without updating contracts + docs
-
-EOF
