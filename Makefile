@@ -73,3 +73,11 @@ db-psql:
 .PHONY: migrate
 migrate:
 	sh -lc 'uv sync --project services/api && API_DATABASE_URL=$(DB_URL) uv run --project services/api alembic -c services/api/alembic.ini upgrade head'
+
+# ----------------------------
+# OpenSearch (bootstrap)
+# ----------------------------
+.PHONY: opensearch-bootstrap
+opensearch-bootstrap:
+	OPENSEARCH_URL=$${OPENSEARCH_URL:-http://localhost:9200} \
+	bash infra/opensearch/scripts/bootstrap.sh

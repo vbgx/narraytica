@@ -52,3 +52,11 @@ def create_app() -> FastAPI:
     return app
 
 app = create_app()
+
+# ---- OpenSearch bootstrap (EPIC 00 / 00.07) ----
+from search.opensearch.bootstrap import bootstrap_opensearch  # noqa: E402
+
+
+@app.on_event("startup")
+def _startup_search_bootstrap() -> None:
+    bootstrap_opensearch()

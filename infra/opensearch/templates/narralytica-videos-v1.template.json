@@ -1,0 +1,30 @@
+{
+  "index_patterns": ["narralytica-videos-v1"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "refresh_interval": "1s"
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "video_id": { "type": "keyword" },
+        "source": { "type": "keyword" },
+        "title": {
+          "type": "text",
+          "fields": { "raw": { "type": "keyword", "ignore_above": 256 } }
+        },
+        "description": { "type": "text" },
+        "published_at": { "type": "date" },
+        "duration_sec": { "type": "integer" },
+        "language": { "type": "keyword" },
+        "tags": { "type": "keyword" },
+
+        "created_at": { "type": "date" },
+        "updated_at": { "type": "date" }
+      }
+    }
+  },
+  "priority": 100
+}
