@@ -4,14 +4,21 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Core
     env: str = "local"
     log_level: str = "info"
-
     service_name: str = "narralytica-api"
 
-    # telemetry toggles (runtime)
-    otel_enabled: bool = True
+    # Telemetry toggles (runtime)
+    otel_enabled: bool = False
+    otel_exporter_otlp_endpoint: str = "http://localhost:4318"
     metrics_enabled: bool = True
+
+    # Dependencies
+    # Accepts SQLAlchemy style driver too (we normalize in health/db code):
+    # postgresql+psycopg://user:pass@host:port/db
+    database_url: str = "postgresql+psycopg://narralytica:narralytica@127.0.0.1:15432/narralytica"
+    redis_url: str = "redis://127.0.0.1:6379"
 
     class Config:
         env_prefix = ""
@@ -20,9 +27,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-
-# --- OpenTelemetry (optional) ---
-# NOTE: keep it opt-in for local dev. Enable only when collector is running.
-# Example: OTEL_ENABLED=true OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-
