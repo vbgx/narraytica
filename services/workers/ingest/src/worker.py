@@ -4,6 +4,7 @@ from typing import Any
 
 from domain.job_status import JobStatus
 from packages.shared.storage.s3_client import S3ObjectStorageClient
+from youtube.downloader import download_youtube_video
 
 logger = logging.getLogger("ingest-worker")
 
@@ -29,13 +30,16 @@ class IngestWorker:
             self._update_status(job_id, JobStatus.RUNNING)
 
             self._update_phase(job_id, "downloading")
-            video_bytes = self._download_media(job)
+            video_bytes, source_metadata = self._download_media(job)
 
             self._update_phase(job_id, "processing")
             audio_bytes = self._extract_audio(job, video_bytes)
 
             self._update_phase(job_id, "storing")
             self._store_artifacts(job, video_bytes, audio_bytes)
+
+            # Attach extracted metadata for downstream steps
+            job["payload"].setdefault("extracted_metadata", {}).update(source_metadata)
 
             self._update_status(job_id, JobStatus.SUCCEEDED)
             self._clear_phase(job_id)
@@ -47,15 +51,24 @@ class IngestWorker:
             self._fail_job(job_id, str(e))
 
     # -------------------------
-    # Phase Methods (Mocked I/O)
+    # Phase Methods
     # -------------------------
 
-    def _download_media(self, job: dict[str, Any]) -> bytes:
-        logger.info("mock_download_media", extra={"job_id": job["id"]})
-        return b"fake video data"
+    def _download_media(self, job: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
+        logger.info("download_media_start", extra={"job_id": job["id"]})
+
+        source = job["payload"]["source"]
+
+        if source["kind"] == "youtube":
+            video_bytes, metadata = download_youtube_video(source["url"])
+            logger.info("youtube_download_success", extra={"job_id": job["id"]})
+            return video_bytes, metadata
+
+        raise NotImplementedError("Only YouTube ingestion is supported in 02.06")
 
     def _extract_audio(self, job: dict[str, Any], video_bytes: bytes) -> bytes:
         logger.info("mock_extract_audio", extra={"job_id": job["id"]})
+        # ffmpeg integration comes in a later issue
         return b"fake audio data"
 
     def _store_artifacts(
