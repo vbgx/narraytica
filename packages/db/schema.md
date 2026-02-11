@@ -25,150 +25,80 @@ Schema changes should be additive when possible and applied through migrations.
 
 Core Entity Groups
 1. Identity & Access
-Table	Purpose
-users	Authenticated identities
-roles	Named permission sets
-permissions	Action–resource definitions
-memberships	Link between users and tenants with roles
-
-These tables support authentication and authorization.
+Table   Purpose
+users   Authenticated identities
+roles   Named permission sets
+permissions     Action–resource definitions
+memberships     Link between users and tenants with roles
 
 2. Tenancy
-Table	Purpose
-tenants	Logical isolation boundary
-tenant_configs	Per-tenant configuration
-
-Every tenant-scoped table references tenants.id.
+Table   Purpose
+tenants Logical isolation boundary
+tenant_configs  Per-tenant configuration
 
 3. Domain Data
 
 These tables represent the core business entities of the platform.
 
-Examples (names will vary by domain):
+Narralytica Canonical Domain Tables
 
-Table	Purpose
-documents	Primary content or records
-datasets	Logical collections of data
-records	Individual domain items
-attachments	Associated artifacts stored in object storage
+Table   Purpose
+videos          Canonical video sources and metadata (multi-source)
+transcripts     Full timecoded transcript per video
+segments        Time-bounded units of speech
+speakers        Speaker identities within or across videos
+layers          Versioned AI outputs attached to segments
 
-These tables are the inputs to pipelines and indexing.
+Note: AI layers are derived but stored as durable, versioned outputs for reproducibility.
+Search indexes remain fully derived systems.
 
 4. Operational Tables
 
-These support system operation rather than domain meaning.
-
-Table	Purpose
-jobs	Background task tracking
-pipeline_checkpoints	Progress tracking for long processes
-event_logs	Record of emitted or processed events
-audit_logs	Security and compliance records
-
-Operational tables are critical for reliability and observability.
+Table   Purpose
+jobs    Background task tracking
+pipeline_checkpoints    Progress tracking
+event_logs      Event history
+audit_logs      Security and compliance records
 
 Common Columns and Conventions
 Identifiers
 
-Primary keys are stable, unique identifiers
-
-IDs must not be reused
-
-Public APIs may expose safe IDs, but internal numeric IDs should remain internal when possible
+Primary keys are stable unique identifiers. IDs must not be reused.
 
 Timestamps
 
-Most tables include:
-
-created_at
-
-updated_at
-
-These support auditing and synchronization with derived systems.
+Most tables include created_at and updated_at.
 
 Tenant Scoping
 
-Tenant-scoped tables include:
-
-tenant_id (indexed)
-
-Foreign key to tenants(id)
-
-Queries must always filter by tenant_id.
+Tenant-scoped tables include tenant_id (indexed).
 
 Indexing Strategy
 
-Indexes should support:
-
-Lookup by primary key
-
-Lookup by tenant_id
-
-Common filter and join patterns
-
-Uniqueness constraints where required
-
-Over-indexing should be avoided to reduce write overhead.
+Indexes support:
+- PK lookups
+- tenant_id scoping
+- common filter patterns
 
 Relationships
 
-Common relationship types:
-
-One-to-many (tenant → users, dataset → records)
-
-Many-to-many (users ↔ roles via memberships)
-
-One-to-many (entity → jobs, entity → events)
-
-Foreign keys should be used to enforce integrity where possible.
+Foreign keys should enforce integrity wherever possible.
 
 Migrations
 
 Schema changes must be applied through versioned migrations.
-
-Guidelines:
-
-Prefer additive changes
-
-Avoid destructive changes without a migration plan
-
-Deploy schema changes before code that depends on them
-
-Test migrations in staging environments
+Prefer additive changes.
 
 Anti-Patterns to Avoid
 
-Storing derived search or AI data as canonical truth
-
-Cross-tenant queries without explicit scoping
-
-Unbounded text fields without purpose
-
-Business logic embedded in the database without documentation
+Storing derived AI/search data as canonical truth.
+Cross-tenant queries without scoping.
 
 Relationship to Other Systems
 
-Search: receives denormalized projections of domain entities
-
-Pipelines: read canonical data and write derived outputs
-
-API: reads/writes canonical data
-
-Workers: update operational tables and derived state
-
-The database anchors the rest of the system.
+Search, Pipelines, API, and Workers all derive from this canonical store.
 
 Summary
 
-The database schema is designed to:
-
-Safely store canonical, tenant-scoped data
-
-Enforce integrity through constraints
-
-Support pipelines and derived systems
-
-Evolve through controlled migrations
-
-It is the foundation on which the rest of the platform is built.
-
-End of Database Schema Overview
+The database schema safely stores canonical tenant-scoped data, enforces integrity,
+and supports derived systems through controlled evolution.
