@@ -46,7 +46,7 @@ After successful transcription, the worker must produce:
 
 Transcript format must align with the canonical schema defined in:
 
-pgsql```    
+pgsql```
 packages/contracts/schemas/transcript.schema.json
 ```
 
@@ -94,7 +94,3 @@ Segment schema → packages/contracts/schemas/segment.schema.json
 Video schema → packages/contracts/schemas/video.schema.json
 
 ---
-
-
-
-

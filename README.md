@@ -4,7 +4,7 @@
 
 It transforms long-form spoken video content (YouTube, conferences, interviews, podcasts) into **structured, searchable, and analyzable knowledge**.
 
-Narralytica is **not an end-user product**.  
+Narralytica is **not an end-user product**.
 It is the **core intelligence layer** powering multiple specialized applications.
 
 ---
@@ -13,12 +13,12 @@ It is the **core intelligence layer** powering multiple specialized applications
 
 Narralytica turns raw video into:
 
-- Time-coded speech segments  
-- Speaker-aware transcripts  
-- Semantic embeddings  
-- AI enrichment layers (topics, summaries, tone, stance, CEFR…)  
-- Hybrid search indexes (semantic + lexical)  
-- APIs for querying, analysis, and reuse  
+- Time-coded speech segments
+- Speaker-aware transcripts
+- Semantic embeddings
+- AI enrichment layers (topics, summaries, tone, stance, CEFR…)
+- Hybrid search indexes (semantic + lexical)
+- APIs for querying, analysis, and reuse
 
 It is effectively:
 

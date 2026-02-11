@@ -25,10 +25,10 @@ This EPIC includes:
 
 This EPIC does **not** include:
 
-- Media ingestion logic  
-- Transcription implementation  
-- AI enrichment logic  
-- Search indexing  
+- Media ingestion logic
+- Transcription implementation
+- AI enrichment logic
+- Search indexing
 
 It defines **structure**, not processing.
 
@@ -49,29 +49,29 @@ It defines **structure**, not processing.
 
 ## 🗂 Deliverables
 
-- Postgres schema for all core entities  
-- Migrations for tables and indexes  
-- JSON Schemas in `packages/contracts/schemas/`  
-- OpenAPI definitions referencing core models  
-- ER diagram in documentation  
-- ID and foreign key conventions documented  
+- Postgres schema for all core entities
+- Migrations for tables and indexes
+- JSON Schemas in `packages/contracts/schemas/`
+- OpenAPI definitions referencing core models
+- ER diagram in documentation
+- ID and foreign key conventions documented
 
 ---
 
 ## 🗂 Issues
 
-1. Define canonical entity list and relationships  
-2. Design Video table schema  
-3. Design Transcript table schema  
-4. Design Segment table schema  
-5. Design Speaker table schema  
-6. Design Layer table schema  
-7. Design Job tracking schema  
-8. Define object storage reference strategy  
-9. Implement DB migrations for all tables  
-10. Write JSON schemas for each entity  
-11. Update OpenAPI contracts  
-12. Document ER model in `docs/architecture/data-model.md`  
+1. Define canonical entity list and relationships
+2. Design Video table schema
+3. Design Transcript table schema
+4. Design Segment table schema
+5. Design Speaker table schema
+6. Design Layer table schema
+7. Design Job tracking schema
+8. Define object storage reference strategy
+9. Implement DB migrations for all tables
+10. Write JSON schemas for each entity
+11. Update OpenAPI contracts
+12. Document ER model in `docs/architecture/data-model.md`
 
 ---
 
@@ -79,13 +79,13 @@ It defines **structure**, not processing.
 
 EPIC 01 is complete when:
 
-- All core entities exist in Postgres  
-- Migrations run cleanly from an empty database  
-- Schemas are reflected in JSON contracts  
-- OpenAPI references canonical types  
-- Relationships between entities are enforced  
-- Documentation clearly describes the model  
-- No pipeline code uses ad-hoc or undefined structures  
+- All core entities exist in Postgres
+- Migrations run cleanly from an empty database
+- Schemas are reflected in JSON contracts
+- OpenAPI references canonical types
+- Relationships between entities are enforced
+- Documentation clearly describes the model
+- No pipeline code uses ad-hoc or undefined structures
 
 ---
 
@@ -102,7 +102,7 @@ EPIC 01 is complete when:
 
 ## 🔗 Links
 
-- Data model documentation → `docs/architecture/data-model.md`  
-- Contracts → `packages/contracts/`  
-- Database layer → `packages/db/`  
+- Data model documentation → `docs/architecture/data-model.md`
+- Contracts → `packages/contracts/`
+- Database layer → `packages/db/`
 - Shared IDs → `packages/shared/ids/`

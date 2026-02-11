@@ -48,29 +48,29 @@ It focuses on **structured retrieval and ranking improvements**.
 
 ## 🗂 Deliverables
 
-- Updated search API with advanced filters  
-- Faceted aggregation support  
-- Query expansion module  
-- Cross-lingual embedding alignment  
-- Basic reranking logic  
-- Highlight generation in search responses  
+- Updated search API with advanced filters
+- Faceted aggregation support
+- Query expansion module
+- Cross-lingual embedding alignment
+- Basic reranking logic
+- Highlight generation in search responses
 
 ---
 
 ## 🗂 Issues
 
-1. Implement hybrid score weighting strategy  
-2. Add facet support in OpenSearch  
-3. Expose filter parameters in API  
-4. Implement query expansion logic  
-5. Integrate cross-lingual embeddings  
-6. Add reranking layer after retrieval  
-7. Implement text highlighting  
-8. Optimize search performance  
-9. Add search analytics and telemetry  
-10. Write integration tests for advanced queries  
-11. Update API documentation  
-12. Document search architecture evolution  
+1. Implement hybrid score weighting strategy
+2. Add facet support in OpenSearch
+3. Expose filter parameters in API
+4. Implement query expansion logic
+5. Integrate cross-lingual embeddings
+6. Add reranking layer after retrieval
+7. Implement text highlighting
+8. Optimize search performance
+9. Add search analytics and telemetry
+10. Write integration tests for advanced queries
+11. Update API documentation
+12. Document search architecture evolution
 
 ---
 
@@ -78,12 +78,12 @@ It focuses on **structured retrieval and ranking improvements**.
 
 EPIC 08 is complete when:
 
-- Users can filter search results by multiple attributes  
-- Cross-lingual search returns meaningful results  
-- Hybrid ranking improves result relevance  
-- Highlights appear correctly in transcripts  
-- Search performance remains acceptable  
-- Documentation explains advanced search behavior  
+- Users can filter search results by multiple attributes
+- Cross-lingual search returns meaningful results
+- Hybrid ranking improves result relevance
+- Highlights appear correctly in transcripts
+- Search performance remains acceptable
+- Documentation explains advanced search behavior
 
 ---
 
@@ -100,6 +100,6 @@ EPIC 08 is complete when:
 
 ## 🔗 Links
 
-- Search architecture → `docs/architecture/search.md`  
-- Search contracts → `packages/contracts/schemas/search.schema.json`  
+- Search architecture → `docs/architecture/search.md`
+- Search contracts → `packages/contracts/schemas/search.schema.json`
 - Indexer worker → `services/workers/indexer/README.md`

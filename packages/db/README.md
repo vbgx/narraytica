@@ -2,7 +2,7 @@
 
 This package contains the **database layer definition** for Narralytica.
 
-Postgres is the **source of truth** for all structured platform data.  
+Postgres is the **source of truth** for all structured platform data.
 Everything else (search indexes, AI layers, caches) is derived from it.
 
 ---
@@ -62,7 +62,7 @@ Migrations are:
 
 ### Running Migrations
 
-Handled via CI/CD or deployment scripts.  
+Handled via CI/CD or deployment scripts.
 Never modify schema directly in production.
 
 ---

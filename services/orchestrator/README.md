@@ -24,13 +24,13 @@ It is the **control layer** for long-running, distributed jobs.
 
 A typical video processing workflow may look like:
 
-1. Ingest video metadata and media  
-2. Extract audio  
-3. Transcribe speech  
-4. Segment transcript with timestamps  
-5. Run AI enrichment layers  
-6. Generate embeddings  
-7. Index into search systems  
+1. Ingest video metadata and media
+2. Extract audio
+3. Transcribe speech
+4. Segment transcript with timestamps
+5. Run AI enrichment layers
+6. Generate embeddings
+7. Index into search systems
 
 The orchestrator ensures each step runs **only when prerequisites are satisfied**.
 

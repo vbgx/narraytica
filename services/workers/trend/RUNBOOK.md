@@ -22,9 +22,9 @@ Use this guide if:
 
 Find the job via:
 
-- Admin Console  
-- API `/jobs` endpoint  
-- Scheduler logs or alerts  
+- Admin Console
+- API `/jobs` endpoint
+- Scheduler logs or alerts
 
 Record:
 - `job_id`
@@ -66,8 +66,8 @@ If upstream enrichment is missing, trend results will be incomplete.
 
 Compare:
 
-- Raw segment counts for a sample period  
-- Aggregated trend values for the same period  
+- Raw segment counts for a sample period
+- Aggregated trend values for the same period
 
 If numbers differ significantly, investigate grouping logic or filters.
 
@@ -79,9 +79,9 @@ Trend jobs are safe to rerun.
 
 Retry via:
 
-- Admin Console  
-- Scheduler rerun  
-- CLI backfill command  
+- Admin Console
+- Scheduler rerun
+- CLI backfill command
 
 Confirm that recomputation replaces or updates previous aggregates.
 
@@ -115,10 +115,10 @@ Avoid full-dataset recomputes during peak system usage.
 
 Escalate if:
 
-- Aggregation queries consistently timeout  
-- Database performance degrades  
-- Trend data corruption is suspected  
-- Multiple trend jobs fail in sequence  
+- Aggregation queries consistently timeout
+- Database performance degrades
+- Trend data corruption is suspected
+- Multiple trend jobs fail in sequence
 
 Follow:
 `docs/runbooks/incident.md`
@@ -128,6 +128,6 @@ Follow:
 
 ## 📚 Related Docs
 
-- Data model → `docs/architecture/data-model.md`  
-- Pipelines → `docs/architecture/pipelines.md`  
+- Data model → `docs/architecture/data-model.md`
+- Pipelines → `docs/architecture/pipelines.md`
 - Incident response → `docs/runbooks/incident.md`

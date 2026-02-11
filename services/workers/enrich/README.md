@@ -108,4 +108,3 @@ Operational procedures for rerunning or debugging enrichment jobs are documented
 - Data model → `docs/architecture/data-model.md`
 - Pipelines → `docs/architecture/pipelines.md`
 - Layer schema → `packages/contracts/schemas/layer.schema.json`
-

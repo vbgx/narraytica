@@ -65,19 +65,19 @@ Sensitive operations must be traceable.
 ## ⚙️ Typical Workflows
 
 ### Retry a Failed Job
-1. Search job by video or job ID  
-2. Inspect error details  
-3. Trigger retry  
+1. Search job by video or job ID
+2. Inspect error details
+3. Trigger retry
 
 ### Reindex a Video
-1. Locate video  
-2. Confirm enrichment completed  
-3. Trigger reindex  
+1. Locate video
+2. Confirm enrichment completed
+3. Trigger reindex
 
 ### Investigate a Pipeline Issue
-1. Filter jobs by status = failed  
-2. Group by worker type  
-3. Use logs and runbooks to diagnose  
+1. Filter jobs by status = failed
+2. Group by worker type
+3. Use logs and runbooks to diagnose
 
 ---
 
@@ -85,9 +85,9 @@ Sensitive operations must be traceable.
 
 The Admin Console does **not**:
 
-- Expose end-user search features  
-- Provide analytics dashboards (separate products handle this)  
-- Run processing logic itself  
+- Expose end-user search features
+- Provide analytics dashboards (separate products handle this)
+- Run processing logic itself
 
 It is strictly an **operations interface**.
 
@@ -95,6 +95,6 @@ It is strictly an **operations interface**.
 
 ## 📚 Related Documentation
 
-- API service → `services/api/README.md`  
-- Worker runbooks → `services/workers/*/RUNBOOK.md`  
+- API service → `services/api/README.md`
+- Worker runbooks → `services/workers/*/RUNBOOK.md`
 - Incident response → `docs/runbooks/incident.md`

@@ -22,9 +22,9 @@ Use this guide if:
 
 Locate the job via:
 
-- Admin Console  
-- API `/jobs` endpoint  
-- Logs or alerts  
+- Admin Console
+- API `/jobs` endpoint
+- Logs or alerts
 
 Record:
 - `job_id`
@@ -84,8 +84,8 @@ Before retrying:
 - Ensure previous partial speaker records can be safely replaced
 
 Retry via:
-- Admin Console  
-- API-triggered rerun  
+- Admin Console
+- API-triggered rerun
 - Orchestrator reset (only if documented)
 
 Diarization must be idempotent.
@@ -96,9 +96,9 @@ Diarization must be idempotent.
 
 If diarization output is corrupted or invalid:
 
-1. Remove incorrect speaker segments from DB  
-2. Reset job state  
-3. Re-run diarization  
+1. Remove incorrect speaker segments from DB
+2. Reset job state
+3. Re-run diarization
 
 Never delete downstream enriched data without confirming dependencies.
 
@@ -119,10 +119,10 @@ Never delete downstream enriched data without confirming dependencies.
 
 Escalate if:
 
-- Multiple jobs fail in similar ways  
-- Model produces consistently incorrect clustering  
-- Worker crashes repeatedly  
-- GPU resources unavailable  
+- Multiple jobs fail in similar ways
+- Model produces consistently incorrect clustering
+- Worker crashes repeatedly
+- GPU resources unavailable
 
 Follow incident procedures in:
 
@@ -132,8 +132,8 @@ Follow incident procedures in:
 
 ## 📚 Related Docs
 
-- Pipelines → `docs/architecture/pipelines.md`  
-- Speaker model → `docs/architecture/data-model.md`  
+- Pipelines → `docs/architecture/pipelines.md`
+- Speaker model → `docs/architecture/data-model.md`
 - Incident response → `docs/runbooks/incident.md`
 
 ---

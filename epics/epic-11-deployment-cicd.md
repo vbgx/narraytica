@@ -12,12 +12,12 @@ This EPIC ensures the platform can move from development to real-world usage saf
 
 This EPIC includes:
 
-- CI pipelines for build, test, and lint  
-- Docker image builds for services and workers  
-- Automated database migrations  
-- Environment configuration management  
-- Deployment workflows for staging and production  
-- Release and versioning strategy  
+- CI pipelines for build, test, and lint
+- Docker image builds for services and workers
+- Automated database migrations
+- Environment configuration management
+- Deployment workflows for staging and production
+- Release and versioning strategy
 
 ---
 
@@ -25,9 +25,9 @@ This EPIC includes:
 
 This EPIC does **not** include:
 
-- Blue/green or canary deployments  
-- Auto-scaling infrastructure  
-- Multi-region failover  
+- Blue/green or canary deployments
+- Auto-scaling infrastructure
+- Multi-region failover
 
 It focuses on **stable, controlled deployment pipelines**.
 
@@ -47,30 +47,30 @@ It focuses on **stable, controlled deployment pipelines**.
 
 ## 🗂 Deliverables
 
-- CI workflows for tests and linting  
-- Dockerfiles for all services and workers  
-- Automated image publishing  
-- Migration workflow integrated into deployments  
-- Environment variable and secret management  
-- Staging and production deployment scripts  
-- Release tagging and versioning process  
+- CI workflows for tests and linting
+- Dockerfiles for all services and workers
+- Automated image publishing
+- Migration workflow integrated into deployments
+- Environment variable and secret management
+- Staging and production deployment scripts
+- Release tagging and versioning process
 
 ---
 
 ## 🗂 Issues
 
-1. Create CI workflow for tests and lint  
-2. Create CI workflow for Docker builds  
-3. Implement container registry publishing  
-4. Add migration step to deployment pipeline  
-5. Define environment variable strategy  
-6. Implement staging deployment workflow  
-7. Implement production deployment workflow  
-8. Add rollback procedure  
-9. Add version tagging strategy  
-10. Document deployment architecture  
-11. Create runbook for failed deployments  
-12. Validate full deployment cycle end-to-end  
+1. Create CI workflow for tests and lint
+2. Create CI workflow for Docker builds
+3. Implement container registry publishing
+4. Add migration step to deployment pipeline
+5. Define environment variable strategy
+6. Implement staging deployment workflow
+7. Implement production deployment workflow
+8. Add rollback procedure
+9. Add version tagging strategy
+10. Document deployment architecture
+11. Create runbook for failed deployments
+12. Validate full deployment cycle end-to-end
 
 ---
 
@@ -78,12 +78,12 @@ It focuses on **stable, controlled deployment pipelines**.
 
 EPIC 11 is complete when:
 
-- Code merges trigger automated CI checks  
-- Docker images are built and versioned  
-- Deployments to staging are automated  
-- Production deployments follow documented workflow  
-- Database migrations run safely  
-- Rollback procedure is documented and tested  
+- Code merges trigger automated CI checks
+- Docker images are built and versioned
+- Deployments to staging are automated
+- Production deployments follow documented workflow
+- Database migrations run safely
+- Rollback procedure is documented and tested
 
 ---
 
@@ -100,7 +100,7 @@ EPIC 11 is complete when:
 
 ## 🔗 Links
 
-- Infrastructure → `infra/`  
-- Deployments → `deployments/`  
-- CI workflows → `.github/workflows/`  
+- Infrastructure → `infra/`
+- Deployments → `deployments/`
+- CI workflows → `.github/workflows/`
 - Runbooks → `docs/runbooks/deploy.md`

@@ -49,30 +49,30 @@ Each segment must be linked to **one speaker ID**.
 
 ## 🗂 Deliverables
 
-- Diarize worker implementation  
-- Speaker table and relationships  
-- Voice embedding storage strategy  
-- Basic clustering pipeline  
-- Segment-to-speaker linking  
-- API endpoints for speakers  
-- Documentation of speaker model  
+- Diarize worker implementation
+- Speaker table and relationships
+- Voice embedding storage strategy
+- Basic clustering pipeline
+- Segment-to-speaker linking
+- API endpoints for speakers
+- Documentation of speaker model
 
 ---
 
 ## 🗂 Issues
 
-1. Implement diarization job orchestration  
-2. Add speaker table schema  
-3. Store speaker IDs per segment  
-4. Generate voice embeddings for segments  
-5. Implement per-video speaker clustering  
-6. Explore cross-video clustering strategy (basic)  
-7. Add speaker metadata fields  
-8. Expose `/speakers` API endpoints  
-9. Add logging and performance monitoring  
-10. Write integration tests for speaker linking  
-11. Document speaker system architecture  
-12. Create runbook for diarization and clustering  
+1. Implement diarization job orchestration
+2. Add speaker table schema
+3. Store speaker IDs per segment
+4. Generate voice embeddings for segments
+5. Implement per-video speaker clustering
+6. Explore cross-video clustering strategy (basic)
+7. Add speaker metadata fields
+8. Expose `/speakers` API endpoints
+9. Add logging and performance monitoring
+10. Write integration tests for speaker linking
+11. Document speaker system architecture
+12. Create runbook for diarization and clustering
 
 ---
 
@@ -80,12 +80,12 @@ Each segment must be linked to **one speaker ID**.
 
 EPIC 07 is complete when:
 
-- Each segment has a speaker ID  
-- Speakers are distinguishable within a video  
-- Basic clustering works across segments  
-- Speaker data can be retrieved via API  
-- Diarization jobs are retryable  
-- Documentation explains speaker lifecycle  
+- Each segment has a speaker ID
+- Speakers are distinguishable within a video
+- Basic clustering works across segments
+- Speaker data can be retrieved via API
+- Diarization jobs are retryable
+- Documentation explains speaker lifecycle
 
 ---
 
@@ -102,6 +102,6 @@ EPIC 07 is complete when:
 
 ## 🔗 Links
 
-- Speaker schema → `packages/contracts/schemas/speaker.schema.json`  
-- Diarize worker → `services/workers/diarize/README.md`  
+- Speaker schema → `packages/contracts/schemas/speaker.schema.json`
+- Diarize worker → `services/workers/diarize/README.md`
 - Data model → `docs/architecture/data-model.md`

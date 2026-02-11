@@ -50,7 +50,7 @@ To run in detached mode:
 
 ```bash
 docker compose up -d
-``` 
+```
 
 To stop:
 ```bash
@@ -97,7 +97,7 @@ To fully reset local state:
 
 bash```
 docker compose down -v
-``` 
+```
 ⚠️ This deletes all local data.
 
 ---
@@ -112,6 +112,3 @@ Pipelines → docs/architecture/pipelines.md
 
 
 ---
-
-
-

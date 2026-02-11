@@ -20,7 +20,7 @@ All containers should start and become healthy (or ready) within 1–2 minutes.
 ## 🛑 Stop the Stack
 
 ```bash
-docker compose -f infra/docker/docker-compose.yml down 
+docker compose -f infra/docker/docker-compose.yml down
 ```
 
 ## ♻️ Full Reset (Deletes All Local Data)
@@ -112,7 +112,3 @@ If Docker Desktop has low memory allocation, OpenSearch may fail to start. Incre
 Architecture Overview → `docs/architecture/overview.md`
 
 Local Dev Runbook → `docs/runbooks/local-dev.md`
-
-
-
-

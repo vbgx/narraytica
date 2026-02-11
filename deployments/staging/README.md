@@ -54,12 +54,12 @@ Typical deployment path:
 
 Before any production deployment:
 
-- [ ] Migrations run without errors  
-- [ ] New ingestion jobs complete successfully  
-- [ ] Transcription and enrichment produce expected data  
-- [ ] Search results are consistent and relevant  
-- [ ] No abnormal resource usage  
-- [ ] Admin Console operations behave correctly  
+- [ ] Migrations run without errors
+- [ ] New ingestion jobs complete successfully
+- [ ] Transcription and enrichment produce expected data
+- [ ] Search results are consistent and relevant
+- [ ] No abnormal resource usage
+- [ ] Admin Console operations behave correctly
 
 ---
 
@@ -67,9 +67,9 @@ Before any production deployment:
 
 Staging uses **real infrastructure** and must be treated as sensitive.
 
-- Use staging-specific credentials  
-- Never reuse production secrets  
-- Restrict admin access to the core team  
+- Use staging-specific credentials
+- Never reuse production secrets
+- Restrict admin access to the core team
 
 ---
 

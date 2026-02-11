@@ -133,4 +133,3 @@ Follow:
 - Pipeline overview → `docs/architecture/pipelines.md`
 - Contracts → `packages/contracts`
 - Incident response → `docs/runbooks/incident.md`
-

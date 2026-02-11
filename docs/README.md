@@ -2,7 +2,7 @@
 
 This folder contains all **technical and operational documentation** for the Narralytica platform.
 
-Narralytica is an infrastructure system with multiple services, pipelines, and data flows.  
+Narralytica is an infrastructure system with multiple services, pipelines, and data flows.
 This documentation ensures the system remains **understandable, operable, and scalable**.
 
 ---

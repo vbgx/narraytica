@@ -126,6 +126,3 @@ Those concerns belong to other services.
 - Search schema → `packages/contracts/schemas/search.schema.json`
 
 ---
-
-
-

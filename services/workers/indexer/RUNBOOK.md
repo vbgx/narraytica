@@ -22,9 +22,9 @@ Use this guide if:
 
 Find the job via:
 
-- Admin Console  
-- API `/jobs` endpoint  
-- Logs or alerts  
+- Admin Console
+- API `/jobs` endpoint
+- Logs or alerts
 
 Record:
 - `job_id`

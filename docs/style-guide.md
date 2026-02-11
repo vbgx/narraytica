@@ -115,7 +115,7 @@ Place under the title:
 
 Example:
 
-Back: `../README.md`  
+Back: `../README.md`
 Up: `../../docs/README.md`
 
 ### Bottom of file (recommended for leaf docs)

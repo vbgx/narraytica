@@ -3,9 +3,9 @@
 InsightMonitor is a strategic intelligence platform that tracks **how topics evolve across video discourse**.
 
 It helps organizations understand:
-- Who is talking about what  
-- How narratives shift over time  
-- Which experts drive specific conversations  
+- Who is talking about what
+- How narratives shift over time
+- Which experts drive specific conversations
 
 InsightMonitor turns spoken content into **actionable situational awareness**.
 
@@ -15,10 +15,10 @@ InsightMonitor turns spoken content into **actionable situational awareness**.
 
 InsightMonitor exists to support:
 
-- Strategic monitoring  
-- Narrative tracking  
-- Expert landscape analysis  
-- Early signal detection  
+- Strategic monitoring
+- Narrative tracking
+- Expert landscape analysis
+- Early signal detection
 
 It provides visibility into **what is being said, by whom, and how it changes**.
 
@@ -40,10 +40,10 @@ It provides visibility into **what is being said, by whom, and how it changes**.
 
 InsightMonitor relies on Narralytica’s:
 
-- Topic detection layers  
-- Speaker clustering  
-- Sentiment and stance analysis  
-- Time-based aggregation  
+- Topic detection layers
+- Speaker clustering
+- Sentiment and stance analysis
+- Time-based aggregation
 
 This enables analysis based on **spoken expert discourse**, not just text feeds.
 
@@ -51,10 +51,10 @@ This enables analysis based on **spoken expert discourse**, not just text feeds.
 
 ## 🧭 Example Use Cases
 
-- Policy teams monitoring emerging debates  
-- Strategy teams tracking industry narratives  
-- Research organizations mapping expert ecosystems  
-- Media analysts observing discourse trends  
+- Policy teams monitoring emerging debates
+- Strategy teams tracking industry narratives
+- Research organizations mapping expert ecosystems
+- Media analysts observing discourse trends
 
 ---
 
@@ -62,10 +62,10 @@ This enables analysis based on **spoken expert discourse**, not just text feeds.
 
 Users can:
 
-- Follow specific topics  
-- Track certain speakers  
-- Set thresholds for sudden changes  
-- Receive notifications when discourse patterns shift  
+- Follow specific topics
+- Track certain speakers
+- Set thresholds for sudden changes
+- Receive notifications when discourse patterns shift
 
 Alerts are tied to **real changes in spoken content**.
 
@@ -75,10 +75,10 @@ Alerts are tied to **real changes in spoken content**.
 
 Every insight links back to:
 
-- Specific video segments  
-- Speakers  
-- Timestamps  
-- Context  
+- Specific video segments
+- Speakers
+- Timestamps
+- Context
 
 Users can always verify **the source behind an observed trend**.
 
@@ -94,6 +94,6 @@ It captures **expert and in-depth discourse**, not surface-level reactions.
 
 ## 📚 Related Platform Components
 
-- Trend aggregation → `services/workers/trend/README.md`  
-- Speaker analysis → `apps/speakerdna/README.md`  
+- Trend aggregation → `services/workers/trend/README.md`
+- Speaker analysis → `apps/speakerdna/README.md`
 - Search engine → `docs/architecture/search.md`

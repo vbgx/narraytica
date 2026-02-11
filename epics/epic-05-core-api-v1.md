@@ -16,12 +16,12 @@ This EPIC defines how clients can:
 
 This EPIC includes:
 
-- REST API structure and conventions  
-- Authentication and API key system  
-- Endpoints for videos, transcripts, segments, speakers  
-- Search endpoint integration  
-- Job status and monitoring endpoints  
-- Rate limiting and error handling  
+- REST API structure and conventions
+- Authentication and API key system
+- Endpoints for videos, transcripts, segments, speakers
+- Search endpoint integration
+- Job status and monitoring endpoints
+- Rate limiting and error handling
 
 ---
 
@@ -29,10 +29,10 @@ This EPIC includes:
 
 This EPIC does **not** include:
 
-- Advanced analytics endpoints  
-- Trend aggregation endpoints  
-- Multi-tenant billing features  
-- Public SDK refinements  
+- Advanced analytics endpoints
+- Trend aggregation endpoints
+- Multi-tenant billing features
+- Public SDK refinements
 
 It focuses on a **functional, stable API surface**.
 
@@ -54,30 +54,30 @@ It focuses on a **functional, stable API surface**.
 
 ## 🗂 Deliverables
 
-- OpenAPI specification aligned with contracts  
-- API key authentication system  
-- Middleware for auth and rate limiting  
-- Implemented route handlers for all V1 domains  
-- Unified error response model  
-- Pagination and filtering conventions  
-- API documentation updated  
+- OpenAPI specification aligned with contracts
+- API key authentication system
+- Middleware for auth and rate limiting
+- Implemented route handlers for all V1 domains
+- Unified error response model
+- Pagination and filtering conventions
+- API documentation updated
 
 ---
 
 ## 🗂 Issues
 
-1. Define API versioning strategy  
-2. Implement API key authentication  
-3. Add rate limiting middleware  
-4. Implement `/ingest` endpoint  
-5. Implement `/videos` endpoints  
-6. Implement `/transcripts` endpoints  
-7. Implement `/segments` endpoints  
-8. Implement `/speakers` endpoints  
-9. Integrate `/search` endpoint  
-10. Implement `/jobs` monitoring endpoints  
-11. Standardize error response format  
-12. Add OpenAPI docs generation  
+1. Define API versioning strategy
+2. Implement API key authentication
+3. Add rate limiting middleware
+4. Implement `/ingest` endpoint
+5. Implement `/videos` endpoints
+6. Implement `/transcripts` endpoints
+7. Implement `/segments` endpoints
+8. Implement `/speakers` endpoints
+9. Integrate `/search` endpoint
+10. Implement `/jobs` monitoring endpoints
+11. Standardize error response format
+12. Add OpenAPI docs generation
 
 ---
 
@@ -85,12 +85,12 @@ It focuses on a **functional, stable API surface**.
 
 EPIC 05 is complete when:
 
-- All core endpoints respond correctly  
-- Authentication and rate limits work  
-- Responses conform to OpenAPI contracts  
-- Errors are standardized and documented  
-- API is usable by at least one internal app  
-- API performance is acceptable at small scale  
+- All core endpoints respond correctly
+- Authentication and rate limits work
+- Responses conform to OpenAPI contracts
+- Errors are standardized and documented
+- API is usable by at least one internal app
+- API performance is acceptable at small scale
 
 ---
 
@@ -107,7 +107,7 @@ EPIC 05 is complete when:
 
 ## 🔗 Links
 
-- API architecture → `docs/architecture/api.md`  
-- Contracts → `packages/contracts/openapi.yaml`  
-- Permissions spec → `docs/specs/permissions.md`  
+- API architecture → `docs/architecture/api.md`
+- Contracts → `packages/contracts/openapi.yaml`
+- Permissions spec → `docs/specs/permissions.md`
 - Rate limits → `docs/specs/rate-limits.md`

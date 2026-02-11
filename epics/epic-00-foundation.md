@@ -52,18 +52,18 @@ Those belong to later EPICs.
 
 ## 🗂 Issues
 
-1. Initialize monorepo structure  
-2. Configure Python and Node workspace tooling  
-3. Create Docker Compose stack (Postgres, OpenSearch, Qdrant, MinIO, Redis)  
-4. Bootstrap API service skeleton  
-5. Bootstrap worker service templates  
-6. Set up database migration system  
-7. Configure OpenSearch index templates  
-8. Configure Qdrant collections  
-9. Implement shared logging and telemetry baseline  
-10. Add basic healthcheck endpoints  
-11. Set up GitHub Actions CI (lint + tests)  
-12. Add pre-commit hooks and code style tooling  
+1. Initialize monorepo structure
+2. Configure Python and Node workspace tooling
+3. Create Docker Compose stack (Postgres, OpenSearch, Qdrant, MinIO, Redis)
+4. Bootstrap API service skeleton
+5. Bootstrap worker service templates
+6. Set up database migration system
+7. Configure OpenSearch index templates
+8. Configure Qdrant collections
+9. Implement shared logging and telemetry baseline
+10. Add basic healthcheck endpoints
+11. Set up GitHub Actions CI (lint + tests)
+12. Add pre-commit hooks and code style tooling
 
 ---
 
@@ -95,8 +95,8 @@ EPIC 00 is complete when:
 
 ## 🔗 Links
 
-- Architecture overview → `docs/architecture/overview.md`  
-- Local dev runbook → `docs/runbooks/local-dev.md`  
-- Infra definitions → `infra/`  
-- API skeleton → `services/api/`  
+- Architecture overview → `docs/architecture/overview.md`
+- Local dev runbook → `docs/runbooks/local-dev.md`
+- Infra definitions → `infra/`
+- API skeleton → `services/api/`
 - Worker templates → `services/workers/`

@@ -59,10 +59,10 @@ Production changes must:
 Typical flow: ```local → staging → production````
 
 
-1. Develop and test locally  
-2. Deploy to staging  
-3. Validate pipelines, search, and API  
-4. Promote to production  
+1. Develop and test locally
+2. Deploy to staging
+3. Validate pipelines, search, and API
+4. Promote to production
 
 ---
 
@@ -94,5 +94,3 @@ Use:
 - Deployment procedures → `docs/runbooks/deploy.md`
 - Incident handling → `docs/runbooks/incident.md`
 - Cost management → `docs/runbooks/cost-control.md`
-
-

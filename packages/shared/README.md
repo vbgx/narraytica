@@ -37,7 +37,7 @@ It reduces duplication and prevents subtle inconsistencies across services.
 ## 🧱 Design Principles
 
 ### 1️⃣ Small and Stable
-This package should not grow into a framework.  
+This package should not grow into a framework.
 Only include logic that is:
 - Widely reused
 - Unlikely to change frequently

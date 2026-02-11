@@ -24,10 +24,10 @@ They ensure CI/CD workflows remain **modular, readable, and maintainable**.
 
 Scripts must be:
 
-- **Idempotent** — safe to run multiple times  
-- **Environment-aware** — configurable via environment variables  
-- **Non-interactive** — suitable for automated pipelines  
-- **Fail-fast** — exit immediately on error  
+- **Idempotent** — safe to run multiple times
+- **Environment-aware** — configurable via environment variables
+- **Non-interactive** — suitable for automated pipelines
+- **Fail-fast** — exit immediately on error
 
 ---
 

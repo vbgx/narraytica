@@ -3,9 +3,9 @@
 TrendPulse Video is a platform for **analyzing how ideas evolve over time in video discourse**.
 
 It helps users understand:
-- Which topics are rising or declining  
-- How sentiment shifts around key issues  
-- Who is driving emerging conversations  
+- Which topics are rising or declining
+- How sentiment shifts around key issues
+- Who is driving emerging conversations
 
 TrendPulse transforms millions of spoken segments into **clear temporal insights**.
 
@@ -40,11 +40,11 @@ It turns raw speech data into **narrative trend intelligence**.
 
 TrendPulse relies on Narralytica’s:
 
-- Topic detection layers  
-- Sentiment analysis  
-- Stance classification  
-- Timecoded segments  
-- Speaker clustering  
+- Topic detection layers
+- Sentiment analysis
+- Stance classification
+- Timecoded segments
+- Speaker clustering
 
 All trends originate from **real spoken content**, not social media text alone.
 
@@ -52,20 +52,20 @@ All trends originate from **real spoken content**, not social media text alone.
 
 ## 🧭 Example Use Cases
 
-- Analysts tracking the rise of a new technology narrative  
-- Researchers studying discourse shifts during elections  
-- Strategy teams monitoring how a concept enters mainstream conversation  
-- Journalists identifying early signals in expert talks  
+- Analysts tracking the rise of a new technology narrative
+- Researchers studying discourse shifts during elections
+- Strategy teams monitoring how a concept enters mainstream conversation
+- Journalists identifying early signals in expert talks
 
 ---
 
 ## 🔎 How It Works
 
-1. Select a topic, keyword, or concept  
-2. Choose a time range  
-3. View trend curves and breakdowns  
-4. Drill down to the underlying video segments  
-5. Identify speakers and context behind changes  
+1. Select a topic, keyword, or concept
+2. Choose a time range
+3. View trend curves and breakdowns
+4. Drill down to the underlying video segments
+5. Identify speakers and context behind changes
 
 Every trend is traceable back to **actual speech segments**.
 
@@ -75,9 +75,9 @@ Every trend is traceable back to **actual speech segments**.
 
 TrendPulse emphasizes:
 
-- Source traceability  
-- Context preservation  
-- Time-based clarity  
+- Source traceability
+- Context preservation
+- Time-based clarity
 
 Users can always go from **trend graph → segment → video source**.
 
@@ -85,13 +85,13 @@ Users can always go from **trend graph → segment → video source**.
 
 ## 🚫 Not a Forecasting Engine
 
-TrendPulse analyzes **observed discourse**, not predictions.  
+TrendPulse analyzes **observed discourse**, not predictions.
 It shows what is being said, not what will happen.
 
 ---
 
 ## 📚 Related Platform Components
 
-- Trend worker → `services/workers/trend/README.md`  
-- Data model → `docs/architecture/data-model.md`  
+- Trend worker → `services/workers/trend/README.md`
+- Data model → `docs/architecture/data-model.md`
 - Search & segments → `docs/architecture/search.md`

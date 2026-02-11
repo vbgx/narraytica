@@ -18,11 +18,11 @@ Each worker folder contains:
 
 ## Pipeline Order (V1)
 
-1. **ingest/** — download/upload media, extract audio, store artifacts  
-2. **transcribe/** — ASR to timecoded transcript  
-3. **diarize/** — speaker diarization and clustering (per video)  
-4. **enrich/** — AI layers (embeddings, topics, sentiment, stance, CEFR, summaries)  
-5. **indexer/** — populate OpenSearch + Qdrant for search  
+1. **ingest/** — download/upload media, extract audio, store artifacts
+2. **transcribe/** — ASR to timecoded transcript
+3. **diarize/** — speaker diarization and clustering (per video)
+4. **enrich/** — AI layers (embeddings, topics, sentiment, stance, CEFR, summaries)
+5. **indexer/** — populate OpenSearch + Qdrant for search
 6. **trend/** — aggregate analytics over time (V1.1+)
 
 ---

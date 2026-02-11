@@ -51,10 +51,10 @@ These represent the **platform’s shared language**.
 
 When changing a contract:
 
-1. Update the relevant schema or OpenAPI spec  
-2. Add an entry to `changelog.md`  
-3. Ensure all affected services are updated  
-4. Maintain backward compatibility when possible  
+1. Update the relevant schema or OpenAPI spec
+2. Add an entry to `changelog.md`
+3. Ensure all affected services are updated
+4. Maintain backward compatibility when possible
 
 Breaking changes must be clearly documented.
 

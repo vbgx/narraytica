@@ -107,4 +107,3 @@ Operational procedures for rerunning or debugging indexing jobs are documented i
 - Search architecture → `docs/architecture/search.md`
 - Data model → `docs/architecture/data-model.md`
 - Search mappings → `packages/search`
-

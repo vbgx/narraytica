@@ -121,4 +121,3 @@ Follow incident procedures in:
 - Pipeline overview → `docs/architecture/pipelines.md`
 - Storage architecture → `docs/architecture/overview.md`
 - Incident response → `docs/runbooks/incident.md`
-

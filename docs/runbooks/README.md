@@ -2,7 +2,7 @@
 
 This folder contains **operational runbooks** for running, maintaining, and troubleshooting the Narralytica platform.
 
-Runbooks are **practical, step-by-step guides** for real-world situations.  
+Runbooks are **practical, step-by-step guides** for real-world situations.
 They are not design documents — they are **action guides**.
 
 ---

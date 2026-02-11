@@ -113,4 +113,3 @@ Operational procedures for rerunning or debugging trend jobs are documented in:
 - Data model → `docs/architecture/data-model.md`
 - Pipelines → `docs/architecture/pipelines.md`
 - Analytics consumers → `apps/trendpulse/`
-

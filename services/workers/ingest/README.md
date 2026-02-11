@@ -89,7 +89,7 @@ Those are handled by downstream workers.
 
 ## 🛠 Runbook
 
-Operational procedures for rerunning or debugging ingestion jobs are documented in: 
+Operational procedures for rerunning or debugging ingestion jobs are documented in:
 - `services/workers/ingest/RUNBOOK.md`
 
 ---
@@ -99,5 +99,3 @@ Operational procedures for rerunning or debugging ingestion jobs are documented 
 - Pipelines overview → `docs/architecture/pipelines.md`
 - Data model → `docs/architecture/data-model.md`
 - Storage layer → `docs/architecture/overview.md`
-
-

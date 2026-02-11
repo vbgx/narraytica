@@ -47,9 +47,9 @@ Malformed or unauthorized requests must be rejected safely.
 
 The Webhooks service:
 
-1. Receives and validates external events  
-2. Transforms them into internal event formats  
-3. Publishes jobs to the orchestrator or API layer  
+1. Receives and validates external events
+2. Transforms them into internal event formats
+3. Publishes jobs to the orchestrator or API layer
 
 It does not perform heavy processing itself.
 
@@ -57,9 +57,9 @@ It does not perform heavy processing itself.
 
 ## 🧱 Design Principles
 
-- Stateless and lightweight  
-- Idempotent handling of repeated events  
-- Clear mapping between external events and internal actions  
+- Stateless and lightweight
+- Idempotent handling of repeated events
+- Clear mapping between external events and internal actions
 - Full logging and observability
 
 ---

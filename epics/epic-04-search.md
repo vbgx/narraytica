@@ -12,12 +12,12 @@ This EPIC establishes the foundation of **retrieval over spoken content**.
 
 This EPIC includes:
 
-- Lexical search via OpenSearch  
-- Vector search via Qdrant  
-- Basic hybrid search (lexical + semantic)  
-- Segment-level search results  
-- Filtering by metadata (language, date, source)  
-- API endpoint for search queries  
+- Lexical search via OpenSearch
+- Vector search via Qdrant
+- Basic hybrid search (lexical + semantic)
+- Segment-level search results
+- Filtering by metadata (language, date, source)
+- API endpoint for search queries
 
 ---
 
@@ -25,10 +25,10 @@ This EPIC includes:
 
 This EPIC does **not** include:
 
-- Advanced ranking models  
-- Reranking with LLMs  
-- Cross-lingual semantic alignment  
-- Complex faceting or aggregations  
+- Advanced ranking models
+- Reranking with LLMs
+- Cross-lingual semantic alignment
+- Complex faceting or aggregations
 
 It focuses on a **reliable, minimal retrieval layer**.
 
@@ -46,29 +46,29 @@ It focuses on a **reliable, minimal retrieval layer**.
 
 ## 🗂 Deliverables
 
-- OpenSearch index mappings for segments  
-- Qdrant collection setup for embeddings  
-- Indexer worker able to push documents and vectors  
-- `/search` API endpoint  
-- Query model supporting text + filters  
-- Result format including segment, video, speaker, and timestamps  
+- OpenSearch index mappings for segments
+- Qdrant collection setup for embeddings
+- Indexer worker able to push documents and vectors
+- `/search` API endpoint
+- Query model supporting text + filters
+- Result format including segment, video, speaker, and timestamps
 
 ---
 
 ## 🗂 Issues
 
-1. Design segment search document structure  
-2. Create OpenSearch index template  
-3. Create Qdrant collection schema  
-4. Extend indexer worker to support search indexing  
-5. Implement lexical search query builder  
-6. Implement vector search query logic  
-7. Combine lexical and vector results (basic merge)  
-8. Add metadata filters (language, date, source)  
-9. Implement `/search` API endpoint  
-10. Define search response schema  
-11. Add logging and query telemetry  
-12. Write integration tests for search queries  
+1. Design segment search document structure
+2. Create OpenSearch index template
+3. Create Qdrant collection schema
+4. Extend indexer worker to support search indexing
+5. Implement lexical search query builder
+6. Implement vector search query logic
+7. Combine lexical and vector results (basic merge)
+8. Add metadata filters (language, date, source)
+9. Implement `/search` API endpoint
+10. Define search response schema
+11. Add logging and query telemetry
+12. Write integration tests for search queries
 
 ---
 
@@ -76,12 +76,12 @@ It focuses on a **reliable, minimal retrieval layer**.
 
 EPIC 04 is complete when:
 
-- Segments are searchable via keywords  
-- Semantic search returns relevant segments  
-- Results include correct timestamps and metadata  
-- Filters narrow results correctly  
-- Search API is stable and documented  
-- Indexing and search run reliably at small scale  
+- Segments are searchable via keywords
+- Semantic search returns relevant segments
+- Results include correct timestamps and metadata
+- Filters narrow results correctly
+- Search API is stable and documented
+- Indexing and search run reliably at small scale
 
 ---
 
@@ -98,7 +98,7 @@ EPIC 04 is complete when:
 
 ## 🔗 Links
 
-- Search architecture → `docs/architecture/search.md`  
-- Indexer worker → `services/workers/indexer/README.md`  
-- Search contracts → `packages/contracts/schemas/search.schema.json`  
+- Search architecture → `docs/architecture/search.md`
+- Indexer worker → `services/workers/indexer/README.md`
+- Search contracts → `packages/contracts/schemas/search.schema.json`
 - Pipelines overview → `docs/architecture/pipelines.md`

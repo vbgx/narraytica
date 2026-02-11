@@ -12,12 +12,12 @@ This EPIC makes the platform **safe to evolve**.
 
 This EPIC includes:
 
-- Unit testing across services and workers  
-- Integration testing for end-to-end pipelines  
-- Contract testing for API and schemas  
-- Search relevance smoke tests  
-- Load testing for core endpoints  
-- CI integration for automated validation  
+- Unit testing across services and workers
+- Integration testing for end-to-end pipelines
+- Contract testing for API and schemas
+- Search relevance smoke tests
+- Load testing for core endpoints
+- CI integration for automated validation
 
 ---
 
@@ -25,9 +25,9 @@ This EPIC includes:
 
 This EPIC does **not** include:
 
-- Full-scale production stress testing  
-- UI testing for end-user apps  
-- Business KPI analytics validation  
+- Full-scale production stress testing
+- UI testing for end-user apps
+- Business KPI analytics validation
 
 It focuses on **technical correctness and stability**.
 
@@ -47,29 +47,29 @@ It focuses on **technical correctness and stability**.
 
 ## 🗂 Deliverables
 
-- Test frameworks configured across repos  
-- CI workflows running tests automatically  
-- Integration test environment via Docker Compose  
-- Contract tests validating OpenAPI and JSON schemas  
-- Search smoke test suite  
-- Load test scripts for API and search  
+- Test frameworks configured across repos
+- CI workflows running tests automatically
+- Integration test environment via Docker Compose
+- Contract tests validating OpenAPI and JSON schemas
+- Search smoke test suite
+- Load test scripts for API and search
 
 ---
 
 ## 🗂 Issues
 
-1. Set up test framework for API service  
-2. Add unit tests for domain logic  
-3. Add unit tests for workers  
-4. Build integration test environment  
-5. Implement end-to-end pipeline test  
-6. Implement contract validation tests  
-7. Create search relevance smoke tests  
-8. Add load testing scripts  
-9. Integrate tests into CI  
-10. Enforce test coverage thresholds  
-11. Document testing strategy  
-12. Create troubleshooting guide for failing tests  
+1. Set up test framework for API service
+2. Add unit tests for domain logic
+3. Add unit tests for workers
+4. Build integration test environment
+5. Implement end-to-end pipeline test
+6. Implement contract validation tests
+7. Create search relevance smoke tests
+8. Add load testing scripts
+9. Integrate tests into CI
+10. Enforce test coverage thresholds
+11. Document testing strategy
+12. Create troubleshooting guide for failing tests
 
 ---
 
@@ -77,12 +77,12 @@ It focuses on **technical correctness and stability**.
 
 EPIC 10 is complete when:
 
-- All services have unit tests  
-- Pipelines can be tested end-to-end locally  
-- API contracts are automatically validated  
-- Search queries have smoke tests  
-- CI fails on test regressions  
-- Documentation explains how to run tests  
+- All services have unit tests
+- Pipelines can be tested end-to-end locally
+- API contracts are automatically validated
+- Search queries have smoke tests
+- CI fails on test regressions
+- Documentation explains how to run tests
 
 ---
 
@@ -99,6 +99,6 @@ EPIC 10 is complete when:
 
 ## 🔗 Links
 
-- Test structure → `tests/`  
-- Contracts → `packages/contracts/`  
+- Test structure → `tests/`
+- Contracts → `packages/contracts/`
 - Runbooks → `docs/runbooks/local-dev.md`

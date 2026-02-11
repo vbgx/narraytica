@@ -12,10 +12,10 @@ ClipQuote bridges the gap between **video speech** and **publishable text**.
 
 ClipQuote helps media professionals:
 
-- Find an exact spoken sentence  
-- Verify the surrounding context  
-- Attribute the correct speaker  
-- Export a properly formatted quote  
+- Find an exact spoken sentence
+- Verify the surrounding context
+- Attribute the correct speaker
+- Export a properly formatted quote
 
 It reduces the risk of **misquoting or decontextualizing** video statements.
 
@@ -37,10 +37,10 @@ It reduces the risk of **misquoting or decontextualizing** video statements.
 
 ClipQuote relies on Narralytica’s:
 
-- Timecoded transcripts  
-- Speaker identification  
-- Semantic and lexical search  
-- Contextual segment grouping  
+- Timecoded transcripts
+- Speaker identification
+- Semantic and lexical search
+- Contextual segment grouping
 
 This ensures quotes are grounded in **structured speech data**.
 
@@ -48,11 +48,11 @@ This ensures quotes are grounded in **structured speech data**.
 
 ## 🧭 Journalist Workflow
 
-1. Search for a phrase or topic  
-2. Review matching video segments  
-3. Confirm speaker and context  
-4. Copy the formatted quote  
-5. Include source reference in article  
+1. Search for a phrase or topic
+2. Review matching video segments
+3. Confirm speaker and context
+4. Copy the formatted quote
+5. Include source reference in article
 
 The process is designed to be **fast, reliable, and traceable**.
 
@@ -62,11 +62,11 @@ The process is designed to be **fast, reliable, and traceable**.
 
 Each quote includes:
 
-- Exact transcript text  
-- Speaker name (if available)  
-- Video source  
-- Date  
-- Timestamp  
+- Exact transcript text
+- Speaker name (if available)
+- Video source
+- Date
+- Timestamp
 
 This makes it easy to meet **editorial and legal standards**.
 
@@ -76,9 +76,9 @@ This makes it easy to meet **editorial and legal standards**.
 
 ClipQuote emphasizes:
 
-- Accuracy of transcription  
-- Context preservation  
-- Source traceability  
+- Accuracy of transcription
+- Context preservation
+- Source traceability
 
 Users can always access the original video segment to verify meaning.
 
@@ -86,13 +86,13 @@ Users can always access the original video segment to verify meaning.
 
 ## 🚫 Not a Video Editing Tool
 
-ClipQuote does not edit or export video clips.  
+ClipQuote does not edit or export video clips.
 It focuses on **textual quotes extracted from video**, not media production.
 
 ---
 
 ## 📚 Related Platform Components
 
-- Transcript model → `docs/architecture/data-model.md`  
-- Search engine → `docs/architecture/search.md`  
+- Transcript model → `docs/architecture/data-model.md`
+- Search engine → `docs/architecture/search.md`
 - Speaker analysis → `services/workers/diarize/README.md`

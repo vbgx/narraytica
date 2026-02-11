@@ -12,10 +12,10 @@ Instead of searching entire videos, LectureFinder points directly to **the exact
 
 LectureFinder exists to help users:
 
-- Find short, high-quality explanations of a topic  
-- Compare how different speakers explain the same concept  
-- Learn progressively from simple to advanced material  
-- Build curated learning collections  
+- Find short, high-quality explanations of a topic
+- Compare how different speakers explain the same concept
+- Learn progressively from simple to advanced material
+- Build curated learning collections
 
 It turns the world’s lectures into a **structured knowledge library**.
 
@@ -37,10 +37,10 @@ It turns the world’s lectures into a **structured knowledge library**.
 
 LectureFinder uses Narralytica’s:
 
-- Semantic search  
-- Topic detection  
-- Segment-level summaries  
-- CEFR and complexity scoring  
+- Semantic search
+- Topic detection
+- Segment-level summaries
+- CEFR and complexity scoring
 
 This allows the platform to identify not just *mentions* of a concept, but **true explanatory moments**.
 
@@ -48,11 +48,11 @@ This allows the platform to identify not just *mentions* of a concept, but **tru
 
 ## 🧭 Example Learning Flow
 
-1. Search for a concept (e.g., “neural networks”)  
-2. Filter by difficulty (beginner → advanced)  
-3. Watch short explanation segments  
-4. Compare multiple speakers’ approaches  
-5. Save the best explanations into a study list  
+1. Search for a concept (e.g., “neural networks”)
+2. Filter by difficulty (beginner → advanced)
+3. Watch short explanation segments
+4. Compare multiple speakers’ approaches
+5. Save the best explanations into a study list
 
 Learning becomes **modular, flexible, and context-rich**.
 
@@ -60,10 +60,10 @@ Learning becomes **modular, flexible, and context-rich**.
 
 ## 📚 Who It’s For
 
-- Students supplementing formal education  
-- Self-learners exploring new topics  
-- Teachers looking for video resources  
-- Professionals refreshing key concepts  
+- Students supplementing formal education
+- Self-learners exploring new topics
+- Teachers looking for video resources
+- Professionals refreshing key concepts
 
 ---
 
@@ -71,10 +71,10 @@ Learning becomes **modular, flexible, and context-rich**.
 
 Every explanation is linked to:
 
-- Original video source  
-- Speaker  
-- Timestamp  
-- Context  
+- Original video source
+- Speaker
+- Timestamp
+- Context
 
 Users can always verify **where and how a concept was explained**.
 
@@ -82,13 +82,13 @@ Users can always verify **where and how a concept was explained**.
 
 ## 🚫 Not a Full Course Platform
 
-LectureFinder does not replace structured courses.  
+LectureFinder does not replace structured courses.
 It is designed as a **discovery and reinforcement tool** built on real educational content.
 
 ---
 
 ## 📚 Related Platform Components
 
-- Search engine → `docs/architecture/search.md`  
-- Data model → `docs/architecture/data-model.md`  
+- Search engine → `docs/architecture/search.md`
+- Data model → `docs/architecture/data-model.md`
 - Enrichment layers → `services/workers/enrich/README.md`

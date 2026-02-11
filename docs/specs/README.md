@@ -2,10 +2,10 @@
 
 This folder contains **system-wide technical specifications**.
 
-Specs define **how Narralytica must behave**, independent of any specific implementation.  
+Specs define **how Narralytica must behave**, independent of any specific implementation.
 They are the **rules of the platform**.
 
-If architecture explains *structure* and runbooks explain *operations*,  
+If architecture explains *structure* and runbooks explain *operations*,
 **specs define contracts and invariants**.
 
 ---
@@ -74,5 +74,5 @@ An EPIC is not complete if it changes behavior without updating specs.
 
 ## ⚖️ Stability
 
-Specifications are expected to change slowly.  
+Specifications are expected to change slowly.
 Frequent changes to specs may indicate unstable platform boundaries.

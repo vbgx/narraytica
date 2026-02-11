@@ -51,12 +51,12 @@ Direct manual changes in production are prohibited.
 
 Before deploying to production:
 
-- [ ] Migrations tested in staging  
-- [ ] API changes reviewed and versioned  
-- [ ] Search index updates validated  
-- [ ] Pipelines tested with real-scale loads  
-- [ ] Observability dashboards reviewed  
-- [ ] Rollback plan defined  
+- [ ] Migrations tested in staging
+- [ ] API changes reviewed and versioned
+- [ ] Search index updates validated
+- [ ] Pipelines tested with real-scale loads
+- [ ] Observability dashboards reviewed
+- [ ] Rollback plan defined
 
 ---
 

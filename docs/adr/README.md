@@ -5,7 +5,7 @@ This folder contains **Architecture Decision Records (ADRs)** for the Narralytic
 ADRs capture **important technical decisions**, the context in which they were made, and the reasoning behind them.
 
 They exist to prevent future confusion like:
-> “Why did we choose this?”  
+> “Why did we choose this?”
 > “Why is the system built this way?”
 
 ---
@@ -44,11 +44,11 @@ Examples:
 
 Each ADR should include:
 
-1. **Title** — Short and descriptive  
-2. **Status** — Proposed / Accepted / Deprecated  
-3. **Context** — Why the decision is needed  
-4. **Decision** — What was chosen  
-5. **Consequences** — Trade-offs and impacts  
+1. **Title** — Short and descriptive
+2. **Status** — Proposed / Accepted / Deprecated
+3. **Context** — Why the decision is needed
+4. **Decision** — What was chosen
+5. **Consequences** — Trade-offs and impacts
 
 ---
 
@@ -67,7 +67,7 @@ Numbers are permanent and should not be reused.
 
 ## 🔄 Updating ADRs
 
-ADRs are not rewritten after acceptance.  
+ADRs are not rewritten after acceptance.
 If a decision changes, create a **new ADR** referencing the old one.
 
 ---
@@ -82,4 +82,3 @@ If a decision changes, create a **new ADR** referencing the old one.
 | ADRs | Explain why key decisions were made |
 
 ADRs explain the **why**, not the **how**.
-

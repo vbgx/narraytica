@@ -2,7 +2,7 @@
 
 This directory contains **end-user applications** built on top of the Narralytica platform.
 
-Narralytica itself is an infrastructure layer.  
+Narralytica itself is an infrastructure layer.
 The apps in this folder are **interfaces, tools, and products** that leverage its APIs and intelligence.
 
 ---
@@ -41,8 +41,8 @@ Think of Narralytica as the **brain**, and these apps as **specialized interface
 
 Apps must follow these rules:
 
-- ❌ No direct access to the database  
-- ❌ No direct access to raw object storage  
+- ❌ No direct access to the database
+- ❌ No direct access to raw object storage
 - ✅ All data access goes through the **Narralytica API**
 - ✅ Apps remain stateless and loosely coupled
 
@@ -76,5 +76,5 @@ See platform deployment docs in: ```docs/runbooks/deploy.md```
 
 ## 📌 Note
 
-This folder may be empty during early infrastructure phases.  
+This folder may be empty during early infrastructure phases.
 Apps are expected to grow as the core Narralytica platform stabilizes.

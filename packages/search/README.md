@@ -84,7 +84,7 @@ Operational procedures for reindexing are documented in: ```docs/runbooks/backfi
 
 ## 🌍 Language Support
 
-OpenSearch analyzers may vary by language.  
+OpenSearch analyzers may vary by language.
 Vector search is language-agnostic at the embedding level but still tied to language-specific preprocessing.
 
 ---
@@ -106,4 +106,3 @@ This package defines **search configuration and strategy only**.
 - Data model → `docs/architecture/data-model.md`
 - API search endpoints → `services/api`
 - Contracts → `packages/contracts`
-
