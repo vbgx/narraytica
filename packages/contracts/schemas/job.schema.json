@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/job.schema.json",
+  "title": "Job",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "type", "status", "video_id", "queued_at", "created_at", "updated_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+
+    "tenant_id": { "type": "string" },
+
+    "type": {
+      "type": "string",
+      "description": "Logical job type (ingest/transcribe/diarize/enrich/index)."
+    },
+    "status": {
+      "type": "string",
+      "description": "Logical job status (queued/running/succeeded/failed/canceled)."
+    },
+
+    "idempotency_key": { "type": "string" },
+
+    "video_id": { "type": "string", "minLength": 1 },
+    "transcript_id": { "type": "string" },
+    "segment_id": { "type": "string" },
+    "layer_id": { "type": "string" },
+
+    "payload": { "type": "object", "additionalProperties": true },
+
+    "queued_at": { "type": "string", "format": "date-time" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

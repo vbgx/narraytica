@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/job_event.schema.json",
+  "title": "JobEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "job_id", "event_type", "payload", "created_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "job_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string" },
+
+    "event_type": { "type": "string" },
+    "payload": { "type": "object", "additionalProperties": true },
+
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

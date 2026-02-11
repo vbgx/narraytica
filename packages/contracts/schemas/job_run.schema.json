@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/job_run.schema.json",
+  "title": "JobRun",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "job_id", "attempt", "status", "created_at", "updated_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "job_id": { "type": "string", "minLength": 1 },
+
+    "attempt": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string" },
+
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "details": { "type": "object", "additionalProperties": true },
+        "correlation_id": { "type": "string" }
+      }
+    },
+
+    "metadata": { "type": "object", "additionalProperties": true },
+
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}
