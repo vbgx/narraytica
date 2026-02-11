@@ -1,1 +1,2 @@
-# TODO: stub (generated template) — fill when implementing
+-- 0002_segments.sql
+-- Reserved for early DB init ordering (legacy). No-op.

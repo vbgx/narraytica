@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS segments (
   start_ms        INTEGER NOT NULL CHECK (start_ms >= 0),
   end_ms          INTEGER NOT NULL CHECK (end_ms > start_ms),
 
-  text            TEXT NULL, -- optional short text snippet
+  text            TEXT NULL,
 
   metadata        JSONB NOT NULL DEFAULT '{}'::jsonb,
 
@@ -19,15 +19,12 @@ CREATE TABLE IF NOT EXISTS segments (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Ensure deterministic ordering per transcript
 CREATE UNIQUE INDEX IF NOT EXISTS segments_transcript_order_unique
   ON segments (transcript_id, segment_index);
 
--- Time-based retrieval within transcript
 CREATE INDEX IF NOT EXISTS segments_transcript_time_idx
   ON segments (transcript_id, start_ms);
 
--- Auto-update updated_at
 DROP TRIGGER IF EXISTS trg_segments_set_updated_at ON segments;
 CREATE TRIGGER trg_segments_set_updated_at
 BEFORE UPDATE ON segments

@@ -95,3 +95,4 @@ kubeconfig
 *.tmp
 *.bak
 *.orig
+.env.local

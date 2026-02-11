@@ -6,30 +6,26 @@ CREATE TABLE IF NOT EXISTS layers (
 
   segment_id       TEXT NOT NULL REFERENCES segments(id) ON DELETE CASCADE,
 
-  layer_type       TEXT NOT NULL,  -- e.g. summary, embedding, sentiment
+  layer_type       TEXT NOT NULL,
 
-  model_provider   TEXT NULL,      -- openai, local, anthropic, etc.
-  model_name       TEXT NULL,      -- gpt-4o, mistral-large, etc.
-  model_version    TEXT NULL,      -- version or revision
-  prompt_hash      TEXT NULL,      -- reproducibility hash
+  model_provider   TEXT NULL,
+  model_name       TEXT NULL,
+  model_version    TEXT NULL,
+  prompt_hash      TEXT NULL,
 
-  payload          JSONB NOT NULL, -- validated against contracts
-
+  payload          JSONB NOT NULL,
   metadata         JSONB NOT NULL DEFAULT '{}'::jsonb,
 
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Fast lookup of layers for a segment
 CREATE INDEX IF NOT EXISTS layers_segment_idx
   ON layers (segment_id);
 
--- Filtering by layer type and recency
 CREATE INDEX IF NOT EXISTS layers_type_created_idx
   ON layers (layer_type, created_at DESC);
 
--- Ensure deterministic uniqueness per model + version context
 CREATE UNIQUE INDEX IF NOT EXISTS layers_unique_versioned
   ON layers (segment_id, layer_type, model_version, prompt_hash);
 

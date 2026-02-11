@@ -1,1 +1,2 @@
-# TODO: stub (generated template) — fill when implementing
+-- 0003_layers.sql
+-- Reserved for early DB init ordering (legacy). No-op.
