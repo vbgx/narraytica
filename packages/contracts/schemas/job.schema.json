@@ -14,9 +14,17 @@
       "type": "string",
       "description": "Logical job type (ingest/transcribe/diarize/enrich/index)."
     },
+
     "status": {
       "type": "string",
-      "description": "Logical job status (queued/running/succeeded/failed/canceled)."
+      "enum": ["queued", "running", "succeeded", "failed", "canceled"],
+      "description": "Logical job status."
+    },
+
+    "ingestion_phase": {
+      "type": "string",
+      "enum": ["downloading", "processing", "storing"],
+      "description": "Fine-grained phase for ingestion jobs only."
     },
 
     "idempotency_key": { "type": "string" },
@@ -27,6 +35,8 @@
     "layer_id": { "type": "string" },
 
     "payload": { "type": "object", "additionalProperties": true },
+
+    "error_message": { "type": "string" },
 
     "queued_at": { "type": "string", "format": "date-time" },
     "started_at": { "type": "string", "format": "date-time" },

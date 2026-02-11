@@ -121,3 +121,38 @@ Follow incident procedures in:
 - Pipeline overview → `docs/architecture/pipelines.md`
 - Storage architecture → `docs/architecture/overview.md`
 - Incident response → `docs/runbooks/incident.md`
+
+## Ingestion Phase Ownership
+
+The **ingest worker** is responsible for updating `ingestion_phase`.
+
+The orchestrator only manages the global job `status`.
+
+### Phase Updates
+
+| Phase | status | ingestion_phase |
+|------|--------|-----------------|
+| Start processing | running | downloading |
+| Audio extraction | running | processing |
+| Persisting artifacts | running | storing |
+| Success | succeeded | null |
+| Failure | failed | null |
+
+This separation ensures:
+- Orchestrator remains generic
+- Worker owns execution details
+- Database reflects real execution state
+
+
+## Ingestion Phase Ownership
+
+The ingest worker is responsible for updating `ingestion_phase`.
+The orchestrator only manages the global job `status`.
+
+| Phase | status | ingestion_phase |
+|------|--------|-----------------|
+| Start processing | running | downloading |
+| Audio extraction | running | processing |
+| Persisting artifacts | running | storing |
+| Success | succeeded | null |
+| Failure | failed | null |
