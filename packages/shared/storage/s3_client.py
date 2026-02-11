@@ -1,3 +1,5 @@
+import os
+
 import boto3
 
 from .client import ObjectStorageClient
@@ -33,3 +35,8 @@ class S3ObjectStorageClient(ObjectStorageClient):
     ) -> None:
         copy_source = {"Bucket": src_bucket, "Key": src_key}
         self.s3.copy_object(Bucket=dst_bucket, Key=dst_key, CopySource=copy_source)
+
+    def download_to_file(self, bucket: str, key: str, dst_path: str) -> None:
+        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+        with open(dst_path, "wb") as f:
+            self.s3.download_fileobj(bucket, key, f)
