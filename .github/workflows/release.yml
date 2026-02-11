@@ -1,1 +1,75 @@
-# TODO(P3): stub (generated template) — fill when implementing
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install Node deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python deps (root)
+        run: uv sync
+
+      - name: Install Python deps (API)
+        run: uv sync --project services/api
+
+      - name: Lint (Python)
+        run: uv run ruff check .
+
+      - name: Format check (Python)
+        run: uv run ruff format . --check
+
+      - name: Tests (API)
+        run: uv run --project services/api pytest -q
+
+      - name: Lint (Node - optional)
+        run: pnpm -r lint || true
+
+      - name: Build (Node - optional)
+        run: pnpm -r build || true
+
+  github-release:
+    needs: build-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

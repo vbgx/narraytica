@@ -1,1 +1,60 @@
-# TODO(P3): stub (generated template) — fill when implementing
+name: Migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        required: true
+        default: staging
+        options:
+          - staging
+          - production
+      dry_run:
+        description: "If true, only show current/head revisions (no upgrade)"
+        type: boolean
+        required: false
+        default: true
+
+concurrency:
+  group: migrations-${{ github.ref }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install deps (API)
+        run: uv sync --project services/api
+
+      - name: Show Alembic current/head
+        env:
+          API_DATABASE_URL: ${{ secrets.API_DATABASE_URL }}
+        run: |
+          uv run --project services/api alembic -c services/api/alembic.ini current || true
+          uv run --project services/api alembic -c services/api/alembic.ini heads
+
+      - name: Apply migrations (upgrade head)
+        if: ${{ inputs.dry_run == false }}
+        env:
+          API_DATABASE_URL: ${{ secrets.API_DATABASE_URL }}
+        run: |
+          test -n "$API_DATABASE_URL" || (echo "Missing secret API_DATABASE_URL" && exit 1)
+          uv run --project services/api alembic -c services/api/alembic.ini upgrade head
