@@ -3,15 +3,13 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI
-
-from settings import settings
-from telemetry.logging import setup_logging
-from telemetry.request_id import RequestIdMiddleware
-from telemetry.http_logging import HttpLoggingMiddleware
-from telemetry.otel import setup_otel
-
 from routes.health import router as health_router
 from routes.metrics import router as metrics_router
+from settings import settings
+from telemetry.http_logging import HttpLoggingMiddleware
+from telemetry.logging import setup_logging
+from telemetry.otel import setup_otel
+from telemetry.request_id import RequestIdMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +22,9 @@ def create_app() -> FastAPI:
     setup_logging(settings.log_level)
 
     otel_enabled = _is_truthy(getattr(settings, "otel_enabled", False))
-    otlp_endpoint = getattr(settings, "otel_exporter_otlp_endpoint", "http://localhost:4318")
+    otlp_endpoint = getattr(
+        settings, "otel_exporter_otlp_endpoint", "http://localhost:4318"
+    )
 
     setup_otel(
         service_name=getattr(settings, "service_name", "narralytica-api"),

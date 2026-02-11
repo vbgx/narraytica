@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import requests
-
 from settings import settings
 from telemetry.logging import get_logger
 
@@ -25,7 +24,10 @@ def ensure_opensearch_ready() -> bool:
         r.raise_for_status()
         return True
     except Exception as e:
-        log.warning("opensearch not ready", extra={"error": str(e), "url": settings.OPENSEARCH_URL})
+        log.warning(
+            "opensearch not ready",
+            extra={"error": str(e), "url": settings.OPENSEARCH_URL},
+        )
         return False
 
 

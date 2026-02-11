@@ -5,9 +5,8 @@ Revises:
 Create Date: 2026-02-11
 """
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "0001_base_schema"
 down_revision = None
@@ -22,7 +21,12 @@ def upgrade() -> None:
         sa.Column("source", sa.String(), nullable=False),
         sa.Column("source_ref", sa.String(), nullable=False),
         sa.Column("title", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
     )
 
     op.create_table(
@@ -32,8 +36,18 @@ def upgrade() -> None:
         sa.Column("type", sa.String(), nullable=False),
         sa.Column("status", sa.String(), nullable=False),
         sa.Column("payload", sa.JSON(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
     )
 
 

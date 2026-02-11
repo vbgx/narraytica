@@ -6,9 +6,8 @@ import sys
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Dict, Optional
-
+from datetime import UTC, datetime
+from typing import Any
 
 # -----------------------------
 # Settings (env-driven)
@@ -23,8 +22,8 @@ POLL_INTERVAL_S = float(os.getenv("WORKER_POLL_INTERVAL_S", "1.0"))
 # -----------------------------
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
-        payload: Dict[str, Any] = {
-            "ts": datetime.now(timezone.utc).isoformat(),
+        payload: dict[str, Any] = {
+            "ts": datetime.now(UTC).isoformat(),
             "level": record.levelname.lower(),
             "logger": record.name,
             "msg": record.getMessage(),
@@ -61,10 +60,10 @@ log = logging.getLogger("worker")
 class Job:
     job_id: str
     job_type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
-def example_handler(job: Job) -> Dict[str, Any]:
+def example_handler(job: Job) -> dict[str, Any]:
     name = str(job.payload.get("name", "world"))
     return {"message": f"hello {name}"}
 
@@ -88,30 +87,56 @@ def poll_once() -> list[Job]:
     """
     if not hasattr(poll_once, "_did_emit"):
         poll_once._did_emit = True  # type: ignore[attr-defined]
-        return [Job(job_id=str(uuid.uuid4()), job_type="example", payload={"name": "narralytica"})]
+        return [
+            Job(
+                job_id=str(uuid.uuid4()),
+                job_type="example",
+                payload={"name": "narralytica"},
+            )
+        ]
     return []
 
 
 def process_job(job: Job) -> None:
     start = time.perf_counter()
-    log.info("job_received", extra={"job_id": job.job_id, "job_type": job.job_type, "status": "received"})
+    log.info(
+        "job_received",
+        extra={"job_id": job.job_id, "job_type": job.job_type, "status": "received"},
+    )
 
     try:
         if job.job_type != "example":
-            log.warning("job_unhandled", extra={"job_id": job.job_id, "job_type": job.job_type, "status": "skipped"})
+            log.warning(
+                "job_unhandled",
+                extra={
+                    "job_id": job.job_id,
+                    "job_type": job.job_type,
+                    "status": "skipped",
+                },
+            )
             return
 
         _ = example_handler(job)
         duration_ms = int((time.perf_counter() - start) * 1000)
         log.info(
             "job_succeeded",
-            extra={"job_id": job.job_id, "job_type": job.job_type, "status": "succeeded", "duration_ms": duration_ms},
+            extra={
+                "job_id": job.job_id,
+                "job_type": job.job_type,
+                "status": "succeeded",
+                "duration_ms": duration_ms,
+            },
         )
     except Exception:
         duration_ms = int((time.perf_counter() - start) * 1000)
         log.exception(
             "job_failed",
-            extra={"job_id": job.job_id, "job_type": job.job_type, "status": "failed", "duration_ms": duration_ms},
+            extra={
+                "job_id": job.job_id,
+                "job_type": job.job_type,
+                "status": "failed",
+                "duration_ms": duration_ms,
+            },
         )
 
 

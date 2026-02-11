@@ -4,12 +4,11 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import create_engine, pool
+from db.schema import metadata
 
 # With prepend_sys_path = services/api/src these imports resolve.
 from settings import settings
-from db.schema import metadata
-
+from sqlalchemy import create_engine, pool
 
 config = context.config
 

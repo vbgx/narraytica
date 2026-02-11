@@ -16,9 +16,22 @@ target-version = "py312"
 line-length = 88
 src = ["services", "packages", "tests"]
 
+# Avoid linting generated / boilerplate code that should not block CI.
+exclude = [
+  ".venv",
+  "**/.venv",
+  "services/api/migrations",
+  "services/workers/_template",
+]
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# If you ever decide to lint these directories, keep them non-blocking on style.
+"services/api/migrations/**" = ["E501"]
+"services/workers/_template/**" = ["E501", "UP006", "UP035"]
 
 [tool.black]
 line-length = 88

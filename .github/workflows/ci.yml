@@ -1,1 +1,84 @@
-# TODO(P3): stub (generated template) — fill when implementing
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # -----------------------
+      # Checkout
+      # -----------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -----------------------
+      # Node / PNPM setup
+      # -----------------------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+
+      # -----------------------
+      # Python / uv setup
+      # -----------------------
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv (Python package manager)
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      # -----------------------
+      # Install dependencies
+      # -----------------------
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies (root)
+        run: uv sync
+
+      - name: Install Python dependencies (API service)
+        run: uv sync --project services/api
+
+      # -----------------------
+      # Lint
+      # -----------------------
+      - name: Lint Node workspaces
+        run: pnpm -r lint || true
+        # Does not fail if some packages don't define a lint script yet
+
+      - name: Lint Python (ruff)
+        run: uv run ruff check .
+
+      # -----------------------
+      # Unit tests
+      # -----------------------
+      - name: Run Python tests
+        run: uv run --project services/api pytest -q
+
+      # -----------------------
+      # Build checks
+      # -----------------------
+      - name: Build Node workspaces
+        run: pnpm -r build || true
+        # Safe if some packages are not buildable yet

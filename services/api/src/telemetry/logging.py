@@ -5,7 +5,8 @@ import logging
 import os
 import sys
 import time
-from typing import Any, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any
 
 
 class JsonFormatter(logging.Formatter):
@@ -29,7 +30,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(base, ensure_ascii=False)
 
 
-def setup_logging(level: Optional[str] = None) -> None:
+def setup_logging(level: str | None = None) -> None:
     lvl = (level or os.getenv("LOG_LEVEL", "info")).upper()
     root = logging.getLogger()
     root.setLevel(lvl)
@@ -41,5 +42,7 @@ def setup_logging(level: Optional[str] = None) -> None:
     root.handlers = [handler]
 
 
-def log_extra(logger: logging.Logger, extra: Mapping[str, Any]) -> logging.LoggerAdapter:
+def log_extra(
+    logger: logging.Logger, extra: Mapping[str, Any]
+) -> logging.LoggerAdapter:
     return logging.LoggerAdapter(logger, dict(extra))
