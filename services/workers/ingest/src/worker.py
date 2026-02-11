@@ -5,9 +5,13 @@ from typing import Any
 
 from domain.job_status import JobStatus
 from media.audio import extract_audio_wav_16k_mono
+from metadata.ffprobe import probe_media
+from metadata.normalize import normalize_video_metadata
 from packages.shared.storage.s3_client import S3ObjectStorageClient
 from upload.handler import migrate_upload_to_canonical
 from youtube.downloader import download_youtube_video
+
+from db.videos import persist_video_metadata
 
 logger = logging.getLogger("ingest-worker")
 
@@ -23,38 +27,63 @@ class IngestWorker:
         )
         self.uploads_bucket = os.getenv("UPLOADS_BUCKET", "uploads")
 
+    # ---------------------------------------------------------------------
+    # Public entrypoint
+    # ---------------------------------------------------------------------
+
     def run(self, job: dict[str, Any]) -> None:
         job_id = job["id"]
-        logger.info("job_started", extra={"job_id": job_id})
+        video_id = job["video_id"]
+
+        logger.info("job_started", extra={"job_id": job_id, "video_id": video_id})
 
         try:
             self._update_status(job_id, JobStatus.RUNNING)
 
+            # 1) Acquire canonical video
             self._update_phase(job_id, "downloading")
-            source_metadata = self._ensure_video_in_canonical_storage(job)
-
-            self._update_phase(job_id, "processing")
-            audio_bytes = self._extract_audio_from_canonical_video(job)
-
-            self._update_phase(job_id, "storing")
-            self._store_audio_artifact(job, audio_bytes)
-
+            source_metadata, video_bucket, video_key = (
+                self._ensure_video_in_canonical_storage(job)
+            )
             job["payload"].setdefault("extracted_metadata", {}).update(source_metadata)
+
+            # 2) Process (ffprobe + audio extraction)
+            self._update_phase(job_id, "processing")
+            audio_bytes, ffprobe_video = self._extract_audio_and_probe(job)
+
+            # 3) Store audio artifact
+            self._update_phase(job_id, "storing")
+            audio_bucket, audio_key = self._store_audio_artifact(job, audio_bytes)
+
+            # 4) Normalize + persist metadata (02.09)
+            self._update_phase(job_id, "metadata")
+            self._normalize_and_persist_metadata(
+                job=job,
+                ffprobe_video=ffprobe_video,
+                video_bucket=video_bucket,
+                video_key=video_key,
+                audio_bucket=audio_bucket,
+                audio_key=audio_key,
+            )
 
             self._update_status(job_id, JobStatus.SUCCEEDED)
             self._clear_phase(job_id)
 
-            logger.info("job_completed", extra={"job_id": job_id})
+            logger.info("job_completed", extra={"job_id": job_id, "video_id": video_id})
 
         except Exception as e:
-            logger.exception("job_failed", extra={"job_id": job_id})
+            logger.exception(
+                "job_failed", extra={"job_id": job_id, "video_id": video_id}
+            )
             self._fail_job(job_id, str(e))
 
-    # -------------------------
+    # ---------------------------------------------------------------------
     # Download / Acquire
-    # -------------------------
+    # ---------------------------------------------------------------------
 
-    def _ensure_video_in_canonical_storage(self, job: dict[str, Any]) -> dict[str, Any]:
+    def _ensure_video_in_canonical_storage(
+        self, job: dict[str, Any]
+    ) -> tuple[dict[str, Any], str, str]:
         payload = job["payload"]
         source = payload["source"]
         artifacts = payload["artifacts"]
@@ -62,13 +91,22 @@ class IngestWorker:
         video_bucket = artifacts["video"]["bucket"]
         video_key = artifacts["video"]["object_key"]
 
-        if source["kind"] == "youtube":
-            video_bytes, metadata = download_youtube_video(source["url"])
-            self.storage.upload_bytes(video_bucket, video_key, video_bytes, "video/mp4")
-            logger.info("canonical_video_uploaded", extra={"job_id": job["id"]})
-            return metadata
+        kind = source.get("kind")
+        if kind == "youtube":
+            url = source.get("url")
+            if not url:
+                raise ValueError("youtube source requires url")
 
-        if source["kind"] == "upload":
+            video_bytes, metadata = download_youtube_video(url)
+            self.storage.upload_bytes(video_bucket, video_key, video_bytes, "video/mp4")
+
+            logger.info(
+                "canonical_video_uploaded",
+                extra={"job_id": job["id"], "bucket": video_bucket, "key": video_key},
+            )
+            return metadata, video_bucket, video_key
+
+        if kind == "upload":
             upload_key = source.get("upload_ref") or source.get("object_key")
             if not upload_key:
                 raise ValueError("upload source requires upload_ref or object_key")
@@ -80,18 +118,27 @@ class IngestWorker:
                 canonical_bucket=video_bucket,
                 canonical_key=video_key,
             )
-            logger.info("canonical_video_ready", extra={"job_id": job["id"]})
-            return {"source_kind": "upload", "upload_migration": mig}
 
-        raise NotImplementedError(f"unsupported source.kind: {source['kind']}")
+            logger.info(
+                "canonical_video_ready",
+                extra={"job_id": job["id"], "bucket": video_bucket, "key": video_key},
+            )
+            return (
+                {"source_kind": "upload", "upload_migration": mig},
+                video_bucket,
+                video_key,
+            )
 
-    # -------------------------
-    # Audio extraction (ffmpeg)
-    # -------------------------
+        raise NotImplementedError(f"unsupported source.kind: {kind}")
 
-    def _extract_audio_from_canonical_video(self, job: dict[str, Any]) -> bytes:
+    # ---------------------------------------------------------------------
+    # Audio extraction + ffprobe
+    # ---------------------------------------------------------------------
+
+    def _extract_audio_and_probe(
+        self, job: dict[str, Any]
+    ) -> tuple[bytes, dict[str, Any]]:
         artifacts = job["payload"]["artifacts"]
-
         video_bucket = artifacts["video"]["bucket"]
         video_key = artifacts["video"]["object_key"]
 
@@ -100,37 +147,78 @@ class IngestWorker:
             audio_path = os.path.join(tmpdir, "audio.wav")
 
             logger.info(
-                "download_video_for_ffmpeg",
+                "download_video_for_processing",
                 extra={"job_id": job["id"], "bucket": video_bucket, "key": video_key},
             )
             self.storage.download_to_file(video_bucket, video_key, video_path)
 
+            ffprobe_video = probe_media(video_path)
             extract_audio_wav_16k_mono(video_path, audio_path)
 
             with open(audio_path, "rb") as f:
-                return f.read()
+                audio_bytes = f.read()
 
-    # -------------------------
+        return audio_bytes, ffprobe_video
+
+    # ---------------------------------------------------------------------
     # Store artifacts
-    # -------------------------
+    # ---------------------------------------------------------------------
 
-    def _store_audio_artifact(self, job: dict[str, Any], audio_bytes: bytes) -> None:
+    def _store_audio_artifact(
+        self, job: dict[str, Any], audio_bytes: bytes
+    ) -> tuple[str, str]:
         artifacts = job["payload"]["artifacts"]
         audio_bucket = artifacts["audio"]["bucket"]
         audio_key = artifacts["audio"]["object_key"]
 
         self.storage.upload_bytes(audio_bucket, audio_key, audio_bytes, "audio/wav")
+
         logger.info(
             "audio_uploaded",
             extra={"job_id": job["id"], "bucket": audio_bucket, "key": audio_key},
         )
+        return audio_bucket, audio_key
 
-        # TODO (DB wiring):
-        # persist storage reference in DB (bucket + key) for the audio artifact
+    # ---------------------------------------------------------------------
+    # Normalize + Persist (02.09)
+    # ---------------------------------------------------------------------
 
-    # -------------------------
+    def _normalize_and_persist_metadata(
+        self,
+        *,
+        job: dict[str, Any],
+        ffprobe_video: dict[str, Any],
+        video_bucket: str,
+        video_key: str,
+        audio_bucket: str,
+        audio_key: str,
+    ) -> None:
+        video_stat = self.storage.stat_object(video_bucket, video_key)
+        audio_stat = self.storage.stat_object(audio_bucket, audio_key)
+
+        source = job["payload"]["source"]
+        source_kind = source.get("kind") or "unknown"
+        source_url = source.get("url")
+
+        norm = normalize_video_metadata(
+            video_id=job["video_id"],
+            source_platform=source_kind,
+            ffprobe_video=ffprobe_video,
+            video_stat=video_stat,
+            audio_stat=audio_stat,
+            extracted_metadata=job["payload"].get("extracted_metadata"),
+        )
+
+        persist_video_metadata(norm, source_url=source_url)
+
+        logger.info(
+            "video_metadata_persisted",
+            extra={"job_id": job["id"], "video_id": job["video_id"]},
+        )
+
+    # ---------------------------------------------------------------------
     # State Management (to be wired to DB later)
-    # -------------------------
+    # ---------------------------------------------------------------------
 
     def _update_status(self, job_id: str, status: JobStatus) -> None:
         logger.info("job_status_update", extra={"job_id": job_id, "status": status})

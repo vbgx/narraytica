@@ -40,3 +40,16 @@ class S3ObjectStorageClient(ObjectStorageClient):
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
         with open(dst_path, "wb") as f:
             self.s3.download_fileobj(bucket, key, f)
+
+    def stat_object(self, bucket: str, key: str) -> dict:
+        """
+        Returns basic metadata for an object without downloading it.
+        """
+        head = self.s3.head_object(Bucket=bucket, Key=key)
+        return {
+            "bucket": bucket,
+            "key": key,
+            "size_bytes": head.get("ContentLength"),
+            "content_type": head.get("ContentType"),
+            "etag": (head.get("ETag") or "").strip('"'),
+        }
