@@ -1,24 +1,28 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from __future__ import annotations
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="API_", extra="ignore")
-
     env: str = "local"
     log_level: str = "info"
 
-    # Postgres DSN for local dev
-    database_url: str = "postgresql+psycopg://narralytica:narralytica@localhost:5432/narralytica"
+    service_name: str = "narralytica-api"
+
+    # telemetry toggles (runtime)
+    otel_enabled: bool = True
+    metrics_enabled: bool = True
+
+    class Config:
+        env_prefix = ""
+        env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()
 
-# ---- OpenSearch (EPIC 00 / 00.07) ----
-OPENSEARCH_TIMEOUT_SECONDS: int = 2
-OPENSEARCH_BOOTSTRAP_ENABLED: bool = True
 
-# Naming conventions:
-# - template: narralytica-videos-template
-# - index:    narralytica-videos-v1 (future: -v2, etc.)
-OPENSEARCH_VIDEOS_TEMPLATE_NAME: str = "narralytica-videos-template"
-OPENSEARCH_VIDEOS_INDEX: str = "narralytica-videos-v1"
+# --- OpenTelemetry (optional) ---
+# NOTE: keep it opt-in for local dev. Enable only when collector is running.
+# Example: OTEL_ENABLED=true OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+

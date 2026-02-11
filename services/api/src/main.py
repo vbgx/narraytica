@@ -1,62 +1,58 @@
-import logging
-import time
-import uuid
+from __future__ import annotations
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+import logging
+
+from fastapi import FastAPI
 
 from settings import settings
 from telemetry.logging import setup_logging
-from routes.health import router as health_router
+from telemetry.request_id import RequestIdMiddleware
+from telemetry.http_logging import HttpLoggingMiddleware
+from telemetry.otel import setup_otel
 
-log = logging.getLogger("api")
+from routes.health import router as health_router
+from routes.metrics import router as metrics_router
+
+logger = logging.getLogger(__name__)
+
+
+def _is_truthy(v: object) -> bool:
+    return str(v).strip().lower() in ("1", "true", "yes", "on")
+
 
 def create_app() -> FastAPI:
     setup_logging(settings.log_level)
 
+    otel_enabled = _is_truthy(getattr(settings, "otel_enabled", False))
+    otlp_endpoint = getattr(settings, "otel_exporter_otlp_endpoint", "http://localhost:4318")
+
+    setup_otel(
+        service_name=getattr(settings, "service_name", "narralytica-api"),
+        enabled=otel_enabled,
+        otlp_endpoint=otlp_endpoint,
+    )
+
     app = FastAPI(title="Narralytica API", version="0.0.0")
 
+    # Correlation + access logs
+    app.add_middleware(RequestIdMiddleware)
+    app.add_middleware(HttpLoggingMiddleware)
+
+    # Routes
     app.include_router(health_router)
+    app.include_router(metrics_router)
 
-    @app.middleware("http")
-    async def request_logging(request: Request, call_next):
-        request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
-        request.state.request_id = request_id
-
-        start = time.perf_counter()
+    # OTel instrumentation (safe, opt-in)
+    if otel_enabled:
         try:
-            response = await call_next(request)
-        except Exception:
-            duration_ms = int((time.perf_counter() - start) * 1000)
-            log.exception("request_failed", extra={
-                "request_id": request_id,
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": 500,
-                "duration_ms": duration_ms,
-            })
-            return JSONResponse(status_code=500, content={"error": {"code": "internal_error", "request_id": request_id}})
+            from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-        duration_ms = int((time.perf_counter() - start) * 1000)
-        log.info("request", extra={
-            "request_id": request_id,
-            "method": request.method,
-            "path": request.url.path,
-            "status_code": response.status_code,
-            "duration_ms": duration_ms,
-        })
+            FastAPIInstrumentor.instrument_app(app)
+        except Exception as e:
+            logger.warning("otel_instrumentation_failed", extra={"error": str(e)})
 
-        response.headers["x-request-id"] = request_id
-        return response
-
+    logger.info("api_start")
     return app
 
+
 app = create_app()
-
-# ---- OpenSearch bootstrap (EPIC 00 / 00.07) ----
-from search.opensearch.bootstrap import bootstrap_opensearch  # noqa: E402
-
-
-@app.on_event("startup")
-def _startup_search_bootstrap() -> None:
-    bootstrap_opensearch()
