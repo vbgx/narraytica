@@ -1,0 +1,97 @@
+# =============================================================================
+# OS / Editor
+# =============================================================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+.vscode/
+.idea/
+*.iml
+
+# =============================================================================
+# Secrets / env (on garde .env.example tracké)
+# =============================================================================
+.env
+.env.*.local
+.env.local
+.envrc.local
+
+# direnv
+.direnv/
+
+# =============================================================================
+# Node / pnpm / turbo
+# =============================================================================
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.turbo/
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# si un jour tu ajoutes Next/React/Vite, ça couvre déjà
+.next/
+.vercel/
+.vite/
+.eslintcache
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# venvs
+venv/
+.venv/
+
+# caches / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# =============================================================================
+# Docker
+# =============================================================================
+*.log
+docker-compose.override.yml
+
+# =============================================================================
+# Infra / Terraform / Helm / K8s
+# =============================================================================
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+terraform.tfplan
+
+# Helm packaging outputs (si tu en génères)
+*.tgz
+
+# kube configs / local cluster files
+.kube/
+kubeconfig
+
+# =============================================================================
+# Misc
+# =============================================================================
+*.tmp
+*.bak
+*.orig
