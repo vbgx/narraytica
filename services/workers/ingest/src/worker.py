@@ -1,14 +1,22 @@
 import logging
+import os
 from typing import Any
 
 from domain.job_status import JobStatus
+from packages.shared.storage.s3_client import S3ObjectStorageClient
 
 logger = logging.getLogger("ingest-worker")
 
 
 class IngestWorker:
-    def __init__(self):
+    def __init__(self) -> None:
         logger.info("ingest_worker_initialized")
+
+        self.storage = S3ObjectStorageClient(
+            endpoint_url=os.getenv("S3_ENDPOINT"),
+            access_key=os.getenv("S3_ACCESS_KEY"),
+            secret_key=os.getenv("S3_SECRET_KEY"),
+        )
 
     # -------------------------
     # Public entrypoint
@@ -21,13 +29,13 @@ class IngestWorker:
             self._update_status(job_id, JobStatus.RUNNING)
 
             self._update_phase(job_id, "downloading")
-            self._download_media(job)
+            video_bytes = self._download_media(job)
 
             self._update_phase(job_id, "processing")
-            self._extract_audio(job)
+            audio_bytes = self._extract_audio(job, video_bytes)
 
             self._update_phase(job_id, "storing")
-            self._store_artifacts(job)
+            self._store_artifacts(job, video_bytes, audio_bytes)
 
             self._update_status(job_id, JobStatus.SUCCEEDED)
             self._clear_phase(job_id)
@@ -39,17 +47,37 @@ class IngestWorker:
             self._fail_job(job_id, str(e))
 
     # -------------------------
-    # Phase Methods (Mocked)
+    # Phase Methods (Mocked I/O)
     # -------------------------
 
-    def _download_media(self, job: dict[str, Any]) -> None:
+    def _download_media(self, job: dict[str, Any]) -> bytes:
         logger.info("mock_download_media", extra={"job_id": job["id"]})
+        return b"fake video data"
 
-    def _extract_audio(self, job: dict[str, Any]) -> None:
+    def _extract_audio(self, job: dict[str, Any], video_bytes: bytes) -> bytes:
         logger.info("mock_extract_audio", extra={"job_id": job["id"]})
+        return b"fake audio data"
 
-    def _store_artifacts(self, job: dict[str, Any]) -> None:
-        logger.info("mock_store_artifacts", extra={"job_id": job["id"]})
+    def _store_artifacts(
+        self,
+        job: dict[str, Any],
+        video_bytes: bytes,
+        audio_bytes: bytes,
+    ) -> None:
+        logger.info("uploading_artifacts", extra={"job_id": job["id"]})
+
+        artifacts = job["payload"]["artifacts"]
+
+        video_bucket = artifacts["video"]["bucket"]
+        video_key = artifacts["video"]["object_key"]
+
+        audio_bucket = artifacts["audio"]["bucket"]
+        audio_key = artifacts["audio"]["object_key"]
+
+        self.storage.upload_bytes(video_bucket, video_key, video_bytes, "video/mp4")
+        self.storage.upload_bytes(audio_bucket, audio_key, audio_bytes, "audio/wav")
+
+        logger.info("artifacts_uploaded", extra={"job_id": job["id"]})
 
     # -------------------------
     # State Management (to be wired to DB later)
