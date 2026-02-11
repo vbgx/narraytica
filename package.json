@@ -1,6 +1,13 @@
 {
-	"devDependencies": {
-		"markdownlint-cli2": "^0.20.0",
-		"markdown-link-check": "^3.14.2"
-	}
+  "name": "narraytica",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.29.2"
 }
