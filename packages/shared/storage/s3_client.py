@@ -6,9 +6,9 @@ from .client import ObjectStorageClient
 class S3ObjectStorageClient(ObjectStorageClient):
     def __init__(
         self,
-        endpoint_url: str,
-        access_key: str,
-        secret_key: str,
+        endpoint_url: str | None,
+        access_key: str | None,
+        secret_key: str | None,
         region: str = "us-east-1",
     ):
         self.s3 = boto3.client(
@@ -27,3 +27,9 @@ class S3ObjectStorageClient(ObjectStorageClient):
     def download_bytes(self, bucket: str, key: str) -> bytes:
         obj = self.s3.get_object(Bucket=bucket, Key=key)
         return obj["Body"].read()
+
+    def copy_object(
+        self, src_bucket: str, src_key: str, dst_bucket: str, dst_key: str
+    ) -> None:
+        copy_source = {"Bucket": src_bucket, "Key": src_key}
+        self.s3.copy_object(Bucket=dst_bucket, Key=dst_key, CopySource=copy_source)
