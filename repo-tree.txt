@@ -127,10 +127,14 @@
 │   │   ├── conventions.md
 │   │   ├── openapi.yaml
 │   │   └── schemas
+│   │       ├── job.schema.json
+│   │       ├── job_event.schema.json
+│   │       ├── job_run.schema.json
 │   │       ├── layer.schema.json
 │   │       ├── search.schema.json
 │   │       ├── segment.schema.json
 │   │       ├── speaker.schema.json
+│   │       ├── storage_ref.schema.json
 │   │       ├── transcript.schema.json
 │   │       └── video.schema.json
 │   ├── db
@@ -138,7 +142,14 @@
 │   │   ├── migrations
 │   │   │   ├── 0001_init.sql
 │   │   │   ├── 0002_segments.sql
-│   │   │   └── 0003_layers.sql
+│   │   │   ├── 0003_layers.sql
+│   │   │   ├── 0004_videos.sql
+│   │   │   ├── 0005_transcripts.sql
+│   │   │   ├── 0006_segments.sql
+│   │   │   ├── 0007_speakers.sql
+│   │   │   ├── 0008_layers.sql
+│   │   │   ├── 0009_jobs.sql
+│   │   │   └── 0010_storage_refs.sql
 │   │   ├── schema.md
 │   │   ├── seeds
 │   │   └── views
@@ -202,19 +213,32 @@
 │   │   ├── pyproject.toml
 │   │   ├── src
 │   │   │   ├── __pycache__
+│   │   │   │   ├── config.cpython-313.pyc
 │   │   │   │   ├── main.cpython-313.pyc
 │   │   │   │   └── settings.cpython-313.pyc
 │   │   │   ├── auth
+│   │   │   ├── config.py
 │   │   │   ├── db
 │   │   │   │   ├── __pycache__
 │   │   │   │   │   └── schema.cpython-313.pyc
 │   │   │   │   └── schema.py
 │   │   │   ├── domain
 │   │   │   ├── main.py
+│   │   │   ├── narralytica_api.egg-info
+│   │   │   │   ├── PKG-INFO
+│   │   │   │   ├── SOURCES.txt
+│   │   │   │   ├── dependency_links.txt
+│   │   │   │   ├── requires.txt
+│   │   │   │   └── top_level.txt
 │   │   │   ├── routes
 │   │   │   │   ├── __pycache__
 │   │   │   │   │   ├── health.cpython-313.pyc
-│   │   │   │   │   └── metrics.cpython-313.pyc
+│   │   │   │   │   ├── jobs.cpython-313.pyc
+│   │   │   │   │   ├── metrics.cpython-313.pyc
+│   │   │   │   │   ├── segments.cpython-313.pyc
+│   │   │   │   │   ├── speakers.cpython-313.pyc
+│   │   │   │   │   ├── transcripts.cpython-313.pyc
+│   │   │   │   │   └── videos.cpython-313.pyc
 │   │   │   │   ├── health.py
 │   │   │   │   ├── ingest.py
 │   │   │   │   ├── jobs.py
@@ -229,7 +253,6 @@
 │   │   │   │       ├── bootstrap.py
 │   │   │   │       └── templates
 │   │   │   │           └── videos.template.json
-│   │   │   ├── settings.py
 │   │   │   ├── storage
 │   │   │   ├── telemetry
 │   │   │   │   ├── __pycache__
@@ -345,10 +368,12 @@
 │   │   └── README.md
 │   └── scripts
 │       ├── backfill_embeddings.sh
+│       ├── db_migrate_check.sh
+│       ├── openapi_validate.py
 │       ├── precommit-node-lint.sh
 │       ├── reindex_all.sh
 │       └── seed_demo_data.sh
 ├── turbo.json
 └── uv.lock
 
-146 directories, 206 files
+147 directories, 230 files
