@@ -1,196 +1,296 @@
 # Data Model Architecture
-Purpose
 
-This document describes the core data model of the system: how entities are structured, how they relate to each other, and how canonical and derived data are separated.
+## Purpose
+
+This document defines the **canonical data model** of the system:
+how core entities are structured, how they relate to each other, and how canonical and derived data are separated.
 
 The data model is designed to be:
 
-clear in ownership
+- Clear in ownership
+- Consistent across services
+- Evolvable without breaking contracts
+- Aligned with system and pipeline boundaries
 
-consistent across services
+---
 
-evolvable without breaking contracts
+## Canonical vs Derived Data
 
-aligned with system boundaries
+The system distinguishes between **canonical data** and **derived data**.
 
-Canonical vs Derived Data
+### Canonical Data
 
-The system distinguishes between:
+Canonical data is the **source of truth** stored in the primary database (Postgres).
 
-Canonical Data
+Examples in this system:
 
-The source of truth stored in the primary database.
+- Videos
+- Transcripts
+- Segments
+- Speakers
+- AI Layers
+- Jobs
+
+Canonical data must be:
+
+- Strongly consistent
+- Traceable
+- Auditable
+- Authoritative across services
+
+---
+
+### Derived Data
+
+Derived data is computed from canonical sources and optimized for performance or specialized use cases.
 
 Examples:
 
-Users
+- Search indexes
+- AI vector embeddings
+- Aggregations and projections
+- Materialized views
 
-Tenants
+Derived data:
 
-Domain entities
+- Can be rebuilt from canonical sources
+- Is eventually consistent
+- Is never considered authoritative
 
-Configuration objects
+---
 
-Canonical data must be strongly consistent and auditable.
+## Core Domain Entities
 
-Derived Data
+The platform models spoken video as structured, queryable data.
 
-Data computed from canonical sources and optimized for performance or specialized use cases.
+| Entity | Description |
+|--------|-------------|
+| **Video** | A single video source and its metadata |
+| **Transcript** | A full timecoded transcript of a video |
+| **Segment** | A time-bounded unit of speech within a transcript |
+| **Speaker** | A speaker identity detected or assigned |
+| **Layer** | AI-generated analytical data attached to segments |
+| **Job** | A processing job tracking pipeline execution |
+
+---
+
+## Canonical Relationships & Cardinalities
+
+This section defines the **baseline relationship model** used consistently across:
+
+- Postgres schema
+- JSON Schemas
+- OpenAPI contracts
+- Pipelines
+
+---
+
+### Video → Transcript
+**Cardinality:** `1 → N`
+
+A video may have multiple transcripts (different providers, languages, or retries).
+
+**Foreign key:**
+
+`transcripts.video_id → videos.id``
+
+
+**Ownership:**
+Transcripts are owned by the video.
+
+---
+
+### Transcript → Segment
+**Cardinality:** `1 → N`
+
+A transcript consists of ordered, time-bounded speech segments.
+
+**Foreign key:**
+
+`segments.transcript_id → transcripts.id``
+
+
+**Invariants:**
+
+- `start_ms < end_ms`
+- Deterministic order via `segment_index`
+- Recommended uniqueness: `(transcript_id, segment_index)`
+
+---
+
+### Segment ↔ Speaker (Diarization)
+
+**Cardinality:** `N ↔ N` via mapping table
+
+A segment may contain multiple speakers, and a speaker may appear in many segments.
+
+**Mapping table:**
+
+| Column | Reference |
+|--------|-----------|
+| segment_id | → segments.id |
+| speaker_id | → speakers.id |
+
+This supports future overlap and complex diarization models.
+
+---
+
+### Segment → Layer
+**Cardinality:** `1 → N`
+
+Segments can have multiple AI-generated analytical layers.
+
+Examples: summary, sentiment, topics, embeddings.
+
+**Foreign key:**
+
+`layers.segment_id → segments.id``
+
+**Recommended uniqueness constraint:**
+
+(segment_id, layer_type, model_version)
+
+
+---
+
+### Job Lineage (Processing Traceability)
+
+Jobs do not own domain data.
+They provide **traceability of processing operations**.
+
+Jobs may reference:
+
+- Source video
+- Source transcript
+- Source segment
+- Produced layer
+
+All such references are **nullable** and used for lineage only.
+
+---
+
+## Deletion Rules
+
+Content hierarchy cascades downward.
+Jobs are immutable logs and must not delete domain data.
+
+| Parent | Child | Rule |
+|--------|-------|------|
+| videos | transcripts | CASCADE |
+| transcripts | segments | CASCADE |
+| segments | layers | CASCADE |
+| segments | segment_speakers | CASCADE |
+| speakers | segment_speakers | CASCADE |
+| jobs | domain entities | NO CASCADE |
+
+---
+
+## Multi-Tenancy Considerations
+
+Tenant isolation is a first-class requirement.
+
+### Tenant-Scoped Root Entities
+
+- Video
+- Speaker
+- Job
+
+Each must include:
+
+`tenant_id``
+
+
+### Derived Scope
+
+Transcripts, Segments, and Layers inherit tenant scope through foreign key chains and do not require redundant tenant columns.
+
+### Rules
+
+- Cross-tenant foreign keys are forbidden
+- Queries must always be tenant-filtered
+- Indexes should include `tenant_id` where applicable
+
+---
+
+## Identifiers
+
+All entities use globally unique identifiers.
+
+### Guidelines
+
+- IDs must be stable across services
+- IDs must never be reused
+- Exposed IDs must be safe for public APIs
+- Prefer ULID or UUIDv7 for sortability
+
+### Naming Conventions
+
+| Type | Format |
+|------|--------|
+| Primary key | `id` |
+| Foreign key | `<entity>_id` |
+| FK constraint | `fk_<child>_<parent>` |
 
 Examples:
 
-Search documents
+- `transcripts.video_id`
+- `segments.transcript_id`
+- `layers.segment_id`
 
-AI-generated enrichments
+---
 
-Aggregations and projections
+## Schema Evolution
 
-Derived data can be rebuilt and is eventually consistent.
+The data model must evolve safely.
 
-Core Entity Categories
-1. Identity & Access
+### Rules
 
-Entities that control who can access the system.
+- Prefer additive changes
+- Avoid renaming fields without migration
+- Maintain backward compatibility in contracts
+- Use DB migrations for structural changes
+- Contract tests must guard cross-service expectations
 
-Entity	Description
-User	An authenticated individual
-Role	A set of permissions
-Permission	Action-resource authorization unit
-Membership	Link between user and tenant
-2. Tenancy
+---
 
-Entities that define isolation boundaries.
+## Denormalization Strategy
 
-Entity	Description
-Tenant	Logical organization boundary
-TenantConfig	Tenant-specific configuration
+For performance:
 
-All tenant-scoped entities must include tenant_id.
+- Some data may be denormalized into derived stores
+- Canonical storage remains normalized and authoritative
+- Derived representations must be rebuildable
 
-3. Domain Entities
+---
 
-Core business objects specific to the platform’s purpose.
+## Validation and Constraints
 
-Examples may include:
+Integrity is enforced through:
 
-Documents
+- Database constraints (FKs, uniqueness)
+- Application-level validation
+- Schema validation at pipeline boundaries
 
-Records
+Validation should occur as early as possible.
 
-Datasets
+---
 
-Content items
-
-These entities:
-
-live in the primary database
-
-may have relationships to other entities
-
-act as inputs to pipelines and indexing
-
-4. Operational Entities
-
-Used to track system behavior rather than domain meaning.
-
-Entity	Description
-Job	Background task execution record
-EventLog	Record of emitted/processed events
-AuditLog	Security- or compliance-related records
-PipelineCheckpoint	Progress marker for long-running processes
-
-These support reliability and observability.
-
-Relationships
-
-Typical relationship patterns:
-
-Tenant → Users (one-to-many)
-
-User ↔ Roles (many-to-many)
-
-Domain Entity → Derived Representations (one-to-many)
-
-Domain Entity → Events (one-to-many, temporal)
-
-Relationships should be explicit and enforceable through foreign keys where appropriate.
-
-Identifiers
-
-Entities use globally unique identifiers.
-
-Guidelines:
-
-Stable across system boundaries
-
-Never reused
-
-Exposed IDs should be safe to share externally
-
-Internal numeric IDs may exist but should not leak into public APIs if avoidable.
-
-Schema Evolution
-
-The data model must support change over time.
-
-Rules:
-
-Additive changes preferred over destructive ones
-
-Avoid renaming fields without migration strategy
-
-Maintain backward compatibility where contracts exist
-
-Use migrations for structural changes
-
-Contract tests should guard cross-service schema expectations.
-
-Denormalization Strategy
-
-For performance reasons:
-
-Some data may be denormalized into derived stores
-
-Canonical storage should remain normalized and authoritative
-
-Derived documents must be rebuildable from canonical entities
-
-Validation and Constraints
-
-The data model enforces integrity through:
-
-Database constraints (foreign keys, uniqueness)
-
-Application-level validation
-
-Schema validation at pipeline boundaries
-
-Validation should occur as early as possible in the data lifecycle.
-
-Multi-Tenancy Considerations
-
-Tenant-scoped entities must:
-
-Include tenant_id
-
-Be indexed by tenant_id for efficient queries
-
-Never be returned across tenant boundaries without explicit authorization
-
-Tenant isolation is a first-class requirement in the data model.
-
-Summary
+## Summary
 
 The data model architecture is built around:
 
-Clear separation of canonical and derived data
+- Clear separation of canonical vs derived data
+- Strong tenant and identity boundaries
+- Explicit, enforceable relationships
+- Evolvable schemas with safe migration paths
 
-Strong identity and tenancy boundaries
+A well-structured canonical data model enables:
 
-Explicit relationships and constraints
+- Reliable pipelines
+- Consistent APIs
+- Scalable AI enrichment
+- Long-term system evolution
 
-Evolvable schemas with migration paths
+---
 
-A well-structured data model enables reliable pipelines, consistent APIs, and scalable system growth.
-
-End of Data Model Architecture Document
+**End of Data Model Architecture Document**
