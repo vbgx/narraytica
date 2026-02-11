@@ -169,3 +169,38 @@ Data warehousing solutions
 For now, a polyglot storage model provides the best balance between flexibility, performance, and operational clarity.
 
 End of ADR 0001
+
+---
+
+## EPIC01-08 — Canonical storage_ref
+
+Narralytica stores large artifacts (media files, full transcript artifacts, embeddings blobs) outside Postgres.
+Postgres stores only references using a single canonical shape: `storage_ref`.
+
+### Canonical shape
+
+`storage_ref` minimal fields:
+- provider
+- bucket
+- key
+
+Optional fields:
+- content_type
+- size_bytes
+- checksum
+- created_at
+- metadata
+
+Contract source of truth:
+- packages/contracts/schemas/storage_ref.schema.json
+
+### DB policy
+
+Entities that reference large artifacts include a `storage_ref` JSONB column.
+Legacy columns may exist temporarily but are considered deprecated in favor of `storage_ref`.
+
+### Retention / lifecycle (baseline)
+
+- Artifacts may be subject to lifecycle rules (expiry, tiering, archival) at the bucket level.
+- Deleting canonical entities does not imply immediate blob deletion unless explicitly implemented by a cleanup job.
+- Checksums (when available) should be stored to support integrity verification and reproducibility.

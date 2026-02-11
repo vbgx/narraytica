@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/storage_ref.schema.json",
+  "title": "StorageRef",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["provider", "bucket", "key"],
+  "properties": {
+    "provider": {
+      "type": "string",
+      "description": "Object storage provider identifier (minio|s3|gcs|azure|filesystem|...)."
+    },
+    "bucket": { "type": "string", "minLength": 1 },
+    "key": { "type": "string", "minLength": 1 },
+    "content_type": { "type": "string" },
+    "size_bytes": { "type": "integer", "minimum": 0 },
+    "checksum": {
+      "type": "string",
+      "description": "Content checksum, e.g. sha256:<hex>."
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

@@ -294,3 +294,34 @@ A well-structured canonical data model enables:
 ---
 
 **End of Data Model Architecture Document**
+
+---
+
+## Storage references (canonical)
+
+Large artifacts are not stored in Postgres. Postgres stores *references* using a canonical `storage_ref` object (JSONB).
+
+`storage_ref` minimal fields:
+- provider, bucket, key
+
+Used for:
+- video media objects (uploads, normalized media)
+- transcript full artifacts (json/vtt/srt)
+- derived blobs (future: embeddings exports, etc.)
+
+Contract:
+- packages/contracts/schemas/storage_ref.schema.json
+
+---
+
+## Storage references
+
+Large artifacts are not stored in Postgres. Postgres stores references using the canonical `storage_ref` object (JSONB).
+
+Used for:
+- video media objects (uploads, normalized media)
+- transcript full artifacts (json/vtt/srt)
+- large derived blobs (optional: embeddings exports, etc.)
+
+Contract:
+- packages/contracts/schemas/storage_ref.schema.json
