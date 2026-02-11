@@ -81,3 +81,11 @@ migrate:
 opensearch-bootstrap:
 	OPENSEARCH_URL=$${OPENSEARCH_URL:-http://localhost:9200} \
 	bash infra/opensearch/scripts/bootstrap.sh
+
+# ----------------------------
+# Qdrant bootstrap
+# ----------------------------
+.PHONY: qdrant-bootstrap
+qdrant-bootstrap:
+	QDRANT_URL=$${QDRANT_URL:-http://localhost:6333} \
+		bash infra/qdrant/scripts/bootstrap.sh

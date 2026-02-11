@@ -1,0 +1,17 @@
+{
+  "vectors": {
+    "embedding": {
+      "size": 768,
+      "distance": "Cosine"
+    }
+  },
+  "optimizers_config": {
+    "default_segment_number": 2
+  },
+  "hnsw_config": {
+    "m": 16,
+    "ef_construct": 128
+  },
+  "replication_factor": 1,
+  "write_consistency_factor": 1
+}
