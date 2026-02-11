@@ -2,326 +2,348 @@
 
 ## Purpose
 
-This document defines the **canonical data model** of the system:
-how core entities are structured, how they relate to each other, and how canonical and derived data are separated.
+This document defines the **canonical data model** of Narralytica: how core entities are structured, how they relate to each other, and which invariants pipelines and services must respect.
 
-The data model is designed to be:
+It is the cross-team reference for:
+- Postgres schema (canonical truth)
+- JSON Schemas (contracts)
+- OpenAPI (API surface)
+- Pipelines (ingest/transcribe/diarize/enrich/index)
 
-- Clear in ownership
-- Consistent across services
-- Evolvable without breaking contracts
-- Aligned with system and pipeline boundaries
+Related:
+- DB overview: `packages/db/schema.md`
+- Canonical JSON schemas: `packages/contracts/schemas/*`
 
 ---
 
 ## Canonical vs Derived Data
 
-The system distinguishes between **canonical data** and **derived data**.
+**Canonical data** is the source of truth stored in Postgres:
+- Videos, transcripts, segments, speakers
+- Durable AI outputs (layers) stored as versioned artifacts
+- Operational lineage (jobs, job_runs, job_events)
 
-### Canonical Data
-
-Canonical data is the **source of truth** stored in the primary database (Postgres).
-
-Examples in this system:
-
-- Videos
-- Transcripts
-- Segments
-- Speakers
-- AI Layers
-- Jobs
-
-Canonical data must be:
-
-- Strongly consistent
-- Traceable
-- Auditable
-- Authoritative across services
-
----
-
-### Derived Data
-
-Derived data is computed from canonical sources and optimized for performance or specialized use cases.
-
-Examples:
-
+**Derived data** is rebuildable and non-authoritative:
 - Search indexes
-- AI vector embeddings
-- Aggregations and projections
-- Materialized views
+- Vector stores / embeddings indexes
+- Projections, aggregations, read models
 
-Derived data:
-
-- Can be rebuilt from canonical sources
-- Is eventually consistent
-- Is never considered authoritative
+Rule of thumb:
+> If it can be rebuilt deterministically from Postgres, it is derived.
 
 ---
 
-## Core Domain Entities
+## Entities
 
-The platform models spoken video as structured, queryable data.
+### Video
+A **video** is the root canonical entity representing a single source (upload, YouTube, etc.) and its metadata. Videos support multiple origins via normalized source fields and may reference stored media objects via storage refs (bucket/key or canonical storage_ref).
 
-| Entity | Description |
-|--------|-------------|
-| **Video** | A single video source and its metadata |
-| **Transcript** | A full timecoded transcript of a video |
-| **Segment** | A time-bounded unit of speech within a transcript |
-| **Speaker** | A speaker identity detected or assigned |
-| **Layer** | AI-generated analytical data attached to segments |
-| **Job** | A processing job tracking pipeline execution |
+Key fields:
+- `id`
+- source identity (e.g. `source_type`, `source_uri`, plus a stable `source_ref`)
+- metadata (title/channel/duration/language/…)
+- `created_at`, `updated_at`
+
+### Transcript
+A **transcript** is a timecoded representation of a video’s speech. Large transcript artifacts may live in object storage; Postgres stores metadata and a reference.
+
+Key fields:
+- `id`, `video_id`
+- `provider` (optional), `language`, `status`
+- artifact reference (bucket/key/format/size/checksum)
+- versioning fields: `version`, `is_latest`
+- `created_at`, `updated_at`
+
+### Segment
+A **segment** is the query backbone: a deterministic, ordered, time-bounded unit of speech within a transcript.
+
+Key fields:
+- `id`, `transcript_id`
+- `segment_index` (ordering)
+- `start_ms`, `end_ms`
+- optional short `text`
+- `created_at`, `updated_at`
+
+### Speaker
+A **speaker** is a canonical identity used for diarization and attribution. Speakers may be tenant-scoped and optionally carry external references.
+
+Key fields:
+- `id`, `tenant_id` (if speaker identities are tenant-scoped)
+- `display_name`, `external_ref` (optional)
+- metadata
+- `created_at`, `updated_at`
+
+### SegmentSpeaker (mapping)
+A **segment_speakers** mapping attaches 0..N speakers to a segment (supports overlaps and “unknown” speakers). Speaker assignment may carry confidence and diarization metadata.
+
+Key fields:
+- `id`
+- `segment_id`
+- `speaker_id` (nullable for unknown)
+- `confidence` (0..1), metadata
+- `created_at`
+
+### Layer
+A **layer** is a durable, versioned AI output attached to a segment (summary/sentiment/topics/embeddings reference/etc.). Payload is stored as JSONB and must be contract-validatable.
+
+Key fields:
+- `id`, `segment_id`
+- `layer_type`
+- model context: provider/name/version, `prompt_hash`
+- `payload` (JSONB), metadata
+- `created_at`, `updated_at`
+
+### Job / JobRun / JobEvent
+A **job** is a logical pipeline request (ingest/transcribe/diarize/enrich/index). A **job_run** is an execution attempt (retries). A **job_event** is an optional append-only event stream for status transitions and auditability.
+
+Key fields:
+- Job: `id`, `type`, `status`, input refs (video/transcript/…), idempotency key, timestamps
+- JobRun: `id`, `job_id`, `attempt`, status, started/finished, error model
+- JobEvent: `id`, `job_id`, event_type, payload, timestamps
+
+Jobs do not “own” domain data. They provide lineage and traceability.
 
 ---
 
-## Canonical Relationships & Cardinalities
-
-This section defines the **baseline relationship model** used consistently across:
-
-- Postgres schema
-- JSON Schemas
-- OpenAPI contracts
-- Pipelines
-
----
+## Relationships and Cardinalities
 
 ### Video → Transcript
-**Cardinality:** `1 → N`
+**1 → N** (a video can have multiple transcripts)
 
-A video may have multiple transcripts (different providers, languages, or retries).
-
-**Foreign key:**
-
-`transcripts.video_id → videos.id``
-
-
-**Ownership:**
-Transcripts are owned by the video.
-
----
+FK:
+- `transcripts.video_id → videos.id`
 
 ### Transcript → Segment
-**Cardinality:** `1 → N`
+**1 → N** (a transcript consists of ordered segments)
 
-A transcript consists of ordered, time-bounded speech segments.
-
-**Foreign key:**
-
-`segments.transcript_id → transcripts.id``
-
-
-**Invariants:**
-
-- `start_ms < end_ms`
-- Deterministic order via `segment_index`
-- Recommended uniqueness: `(transcript_id, segment_index)`
-
----
+FK:
+- `segments.transcript_id → transcripts.id`
 
 ### Segment ↔ Speaker (Diarization)
+**N ↔ N** via mapping table `segment_speakers`
 
-**Cardinality:** `N ↔ N` via mapping table
-
-A segment may contain multiple speakers, and a speaker may appear in many segments.
-
-**Mapping table:**
-
-| Column | Reference |
-|--------|-----------|
-| segment_id | → segments.id |
-| speaker_id | → speakers.id |
-
-This supports future overlap and complex diarization models.
-
----
+FKs:
+- `segment_speakers.segment_id → segments.id`
+- `segment_speakers.speaker_id → speakers.id` (nullable; unknown speaker supported)
 
 ### Segment → Layer
-**Cardinality:** `1 → N`
+**1 → N** (a segment can have multiple layers)
 
-Segments can have multiple AI-generated analytical layers.
+FK:
+- `layers.segment_id → segments.id`
 
-Examples: summary, sentiment, topics, embeddings.
-
-**Foreign key:**
-
-`layers.segment_id → segments.id``
-
-**Recommended uniqueness constraint:**
-
-(segment_id, layer_type, model_version)
-
+### Job lineage
+Jobs may reference inputs/outputs (video/transcript/segment/layer) depending on the pipeline step. These references are for lineage and do not imply ownership.
 
 ---
 
-### Job Lineage (Processing Traceability)
+## Storage References (Object Storage)
 
-Jobs do not own domain data.
-They provide **traceability of processing operations**.
+Large artifacts (media, full transcripts, large AI artifacts) live outside Postgres and are referenced safely.
 
-Jobs may reference:
+Canonical contract:
+- `packages/contracts/schemas/storage_ref.schema.json`
 
-- Source video
-- Source transcript
-- Source segment
-- Produced layer
+DB strategy (current):
+- entity tables may store bucket/key/format/size/checksum fields (or a JSONB `storage_ref` in future)
+- references must be immutable for a given artifact version
 
-All such references are **nullable** and used for lineage only.
-
----
-
-## Deletion Rules
-
-Content hierarchy cascades downward.
-Jobs are immutable logs and must not delete domain data.
-
-| Parent | Child | Rule |
-|--------|-------|------|
-| videos | transcripts | CASCADE |
-| transcripts | segments | CASCADE |
-| segments | layers | CASCADE |
-| segments | segment_speakers | CASCADE |
-| speakers | segment_speakers | CASCADE |
-| jobs | domain entities | NO CASCADE |
+Invariants:
+- bucket/key identify a stable object version
+- checksum is recommended for integrity
+- content_type/format must be explicit when multiple encodings exist (json/vtt/srt/…)
 
 ---
 
-## Multi-Tenancy Considerations
+## Versioning Strategy
 
-Tenant isolation is a first-class requirement.
+### Transcripts
+Transcripts support multiple versions per video:
+- `version` is monotonically increasing per `(video_id, language/provider context)`
+- `is_latest = true` identifies the current canonical transcript for a video
+- only one transcript per video should be `is_latest = true` at any time
 
-### Tenant-Scoped Root Entities
+### Layers
+Layers are versioned by model/prompt context. A segment can have multiple layer rows per type, but must remain deterministic per version.
 
-- Video
-- Speaker
-- Job
+Recommended uniqueness:
+- `(segment_id, layer_type, model_version, prompt_hash)`
 
-Each must include:
-
-`tenant_id``
-
-
-### Derived Scope
-
-Transcripts, Segments, and Layers inherit tenant scope through foreign key chains and do not require redundant tenant columns.
-
-### Rules
-
-- Cross-tenant foreign keys are forbidden
-- Queries must always be tenant-filtered
-- Indexes should include `tenant_id` where applicable
+This enables reproducibility and prevents silent overwrites.
 
 ---
 
-## Identifiers
+## Invariants (must-haves)
 
-All entities use globally unique identifiers.
+### Time bounds and ordering
+- Segments: `start_ms >= 0`, `end_ms > start_ms`
+- `segment_index >= 0`
+- deterministic ordering per transcript via `(transcript_id, segment_index)` unique
 
-### Guidelines
+### Referential integrity
+- Transcript must reference existing video
+- Segment must reference existing transcript
+- Layer must reference existing segment
+- SegmentSpeaker must reference existing segment; speaker may be null (unknown)
 
-- IDs must be stable across services
-- IDs must never be reused
-- Exposed IDs must be safe for public APIs
-- Prefer ULID or UUIDv7 for sortability
+### Tenant scoping
+- Tenant-scoped roots (when present) must be filtered by tenant on every query
+- Speaker identity is tenant-aware via `speakers.tenant_id` (if enabled)
+- Derived entities inherit scope through FK chains (video → transcript → segment → layer)
 
-### Naming Conventions
-
-| Type | Format |
-|------|--------|
-| Primary key | `id` |
-| Foreign key | `<entity>_id` |
-| FK constraint | `fk_<child>_<parent>` |
-
-Examples:
-
-- `transcripts.video_id`
-- `segments.transcript_id`
-- `layers.segment_id`
-
----
-
-## Schema Evolution
-
-The data model must evolve safely.
-
-### Rules
-
-- Prefer additive changes
-- Avoid renaming fields without migration
-- Maintain backward compatibility in contracts
-- Use DB migrations for structural changes
-- Contract tests must guard cross-service expectations
+### Deletion rules
+Canonical hierarchy cascades downward:
+- videos → transcripts (CASCADE)
+- transcripts → segments (CASCADE)
+- segments → layers and segment_speakers (CASCADE)
+Speaker deletion should not delete segments; mappings should be safe (set null or delete mapping row depending on model).
 
 ---
 
-## Denormalization Strategy
+## ER Diagram (Mermaid)
 
-For performance:
+```mermaid
+erDiagram
+  VIDEOS ||--o{ TRANSCRIPTS : has
+  TRANSCRIPTS ||--o{ SEGMENTS : has
+  SEGMENTS ||--o{ LAYERS : has
+  SEGMENTS ||--o{ SEGMENT_SPEAKERS : has
+  SPEAKERS ||--o{ SEGMENT_SPEAKERS : appears_in
 
-- Some data may be denormalized into derived stores
-- Canonical storage remains normalized and authoritative
-- Derived representations must be rebuildable
+  JOBS ||--o{ JOB_RUNS : has
+  JOBS ||--o{ JOB_EVENTS : emits
 
----
+  VIDEOS {
+    string id PK
+    string source_ref
+    string source_type
+    string source_uri
+    string title
+    int duration_ms
+    string language
+    json metadata
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-## Validation and Constraints
+  TRANSCRIPTS {
+    string id PK
+    string video_id FK
+    string provider
+    string language
+    string status
+    int version
+    bool is_latest
+    string artifact_bucket
+    string artifact_key
+    string artifact_format
+    bigint artifact_bytes
+    string artifact_sha256
+    json metadata
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-Integrity is enforced through:
+  SEGMENTS {
+    string id PK
+    string transcript_id FK
+    int segment_index
+    int start_ms
+    int end_ms
+    string text
+    json metadata
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-- Database constraints (FKs, uniqueness)
-- Application-level validation
-- Schema validation at pipeline boundaries
+  SPEAKERS {
+    string id PK
+    string tenant_id
+    string display_name
+    string external_ref
+    json metadata
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-Validation should occur as early as possible.
+  SEGMENT_SPEAKERS {
+    string id PK
+    string segment_id FK
+    string speaker_id FK
+    float confidence
+    json metadata
+    timestamptz created_at
+  }
 
----
+  LAYERS {
+    string id PK
+    string segment_id FK
+    string layer_type
+    string model_provider
+    string model_name
+    string model_version
+    string prompt_hash
+    json payload
+    json metadata
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-## Summary
+  JOBS {
+    string id PK
+    string type
+    string status
+    json payload
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-The data model architecture is built around:
+  JOB_RUNS {
+    string id PK
+    string job_id FK
+    int attempt
+    string status
+    timestamptz started_at
+    timestamptz finished_at
+    json error
+    json metadata
+    timestamptz created_at
+    timestamptz updated_at
+  }
 
-- Clear separation of canonical vs derived data
-- Strong tenant and identity boundaries
-- Explicit, enforceable relationships
-- Evolvable schemas with safe migration paths
+  JOB_EVENTS {
+    string id PK
+    string job_id FK
+    string event_type
+    json payload
+    timestamptz created_at
+  }
+  ```
 
-A well-structured canonical data model enables:
+  ---
 
-- Reliable pipelines
-- Consistent APIs
-- Scalable AI enrichment
-- Long-term system evolution
+  ## Contract Mapping
 
----
+  Each canonical table has a matching contract schema:
 
-**End of Data Model Architecture Document**
+Video → packages/contracts/schemas/video.schema.json
 
----
+Transcript → packages/contracts/schemas/transcript.schema.json
 
-## Storage references (canonical)
+Segment → packages/contracts/schemas/segment.schema.json
 
-Large artifacts are not stored in Postgres. Postgres stores *references* using a canonical `storage_ref` object (JSONB).
+Speaker → packages/contracts/schemas/speaker.schema.json
 
-`storage_ref` minimal fields:
-- provider, bucket, key
+Layer → packages/contracts/schemas/layer.schema.json
 
-Used for:
-- video media objects (uploads, normalized media)
-- transcript full artifacts (json/vtt/srt)
-- derived blobs (future: embeddings exports, etc.)
+Job → packages/contracts/schemas/job.schema.json
 
-Contract:
-- packages/contracts/schemas/storage_ref.schema.json
+JobRun → packages/contracts/schemas/job_run.schema.json
 
----
+JobEvent → packages/contracts/schemas/job_event.schema.json
 
-## Storage references
+StorageRef → packages/contracts/schemas/storage_ref.schema.json
 
-Large artifacts are not stored in Postgres. Postgres stores references using the canonical `storage_ref` object (JSONB).
+The DB overview remains in:
 
-Used for:
-- video media objects (uploads, normalized media)
-- transcript full artifacts (json/vtt/srt)
-- large derived blobs (optional: embeddings exports, etc.)
-
-Contract:
-- packages/contracts/schemas/storage_ref.schema.json
+`packages/db/schema.md`
