@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import logging
 
+from config import settings
 from fastapi import FastAPI
 from routes.health import router as health_router
+from routes.jobs import router as jobs_router
 from routes.metrics import router as metrics_router
-from settings import settings
+from routes.segments import router as segments_router
+from routes.speakers import router as speakers_router
+from routes.transcripts import router as transcripts_router
+from routes.videos import router as videos_router
 from telemetry.http_logging import HttpLoggingMiddleware
 from telemetry.logging import setup_logging
 from telemetry.otel import setup_otel
@@ -38,9 +43,16 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIdMiddleware)
     app.add_middleware(HttpLoggingMiddleware)
 
-    # Routes
+    # System routes
     app.include_router(health_router)
     app.include_router(metrics_router)
+
+    # Domain routes (canonical models)
+    app.include_router(videos_router)
+    app.include_router(transcripts_router)
+    app.include_router(segments_router)
+    app.include_router(speakers_router)
+    app.include_router(jobs_router)
 
     # OTel instrumentation (safe, opt-in)
     if otel_enabled:

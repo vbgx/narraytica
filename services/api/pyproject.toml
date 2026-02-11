@@ -1,25 +1,28 @@
 [project]
 name = "narralytica-api"
-version = "0.0.0"
+version = "0.1.0"
 description = "Narralytica API service"
 requires-python = ">=3.13"
+
 dependencies = [
-  # web
+  # --- Web framework ---
   "fastapi>=0.128.0",
   "uvicorn[standard]>=0.40.0",
-  "pydantic-settings>=2.12.0",
-  "python-dotenv>=1.2.0",
-  "pyyaml>=6.0.0",
 
-  # db + migrations
-  "sqlalchemy>=2.0.0",
-  "psycopg[binary]>=3.2.0",
-  "alembic>=1.13.0",
+  # --- Configuration ---
+  "pydantic-settings>=2.2.1",
+  "python-dotenv>=1.0.1",
+  "pyyaml>=6.0.1",
 
-  # metrics
+  # --- Database ---
+  "sqlalchemy>=2.0.30",
+  "psycopg[binary]>=3.2.1",
+  "alembic>=1.13.1",
+
+  # --- Metrics ---
   "prometheus-client>=0.20.0",
 
-  # tracing
+  # --- Observability / Tracing ---
   "opentelemetry-api>=1.26.0",
   "opentelemetry-sdk>=1.26.0",
   "opentelemetry-exporter-otlp>=1.26.0",
@@ -29,5 +32,7 @@ dependencies = [
 
 [tool.uv]
 dev-dependencies = [
-  "pytest>=9.0.0",
+  "pytest>=8.2.0",
+  "httpx>=0.27.0",
+  "ruff>=0.5.0",
 ]

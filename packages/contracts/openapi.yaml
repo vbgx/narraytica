@@ -1,1 +1,222 @@
-# TODO: stub (generated template) — fill when implementing
+openapi: 3.1.0
+info:
+  title: Narralytica API
+  version: 0.1.0
+  description: Canonical API contract. All shapes must reference packages/contracts/schemas/*.
+
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /health:
+    get:
+      operationId: healthCheck
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status]
+                properties:
+                  status:
+                    type: string
+
+  /videos:
+    get:
+      operationId: listVideos
+      responses:
+        "200":
+          description: List videos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VideoSummary"
+
+  /videos/{video_id}:
+    get:
+      operationId: getVideo
+      parameters:
+        - name: video_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Video
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Video"
+
+  /transcripts:
+    get:
+      operationId: listTranscripts
+      responses:
+        "200":
+          description: List transcripts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TranscriptSummary"
+
+  /transcripts/{transcript_id}:
+    get:
+      operationId: getTranscript
+      parameters:
+        - name: transcript_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Transcript
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transcript"
+
+  /segments:
+    get:
+      operationId: listSegments
+      parameters:
+        - name: transcript_id
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: List segments (optionally filtered by transcript)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Segment"
+
+  /segments/{segment_id}:
+    get:
+      operationId: getSegment
+      parameters:
+        - name: segment_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Segment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Segment"
+
+  /speakers:
+    get:
+      operationId: listSpeakers
+      responses:
+        "200":
+          description: List speakers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Speaker"
+
+  /speakers/{speaker_id}:
+    get:
+      operationId: getSpeaker
+      parameters:
+        - name: speaker_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Speaker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Speaker"
+
+  /jobs:
+    get:
+      operationId: listJobs
+      responses:
+        "200":
+          description: List jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /jobs/{job_id}:
+    get:
+      operationId: getJob
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+components:
+  schemas:
+    # Canonical models (must match JSON Schemas)
+    Video:
+      $ref: "./schemas/video.schema.json"
+    Transcript:
+      $ref: "./schemas/transcript.schema.json"
+    Segment:
+      $ref: "./schemas/segment.schema.json"
+    Speaker:
+      $ref: "./schemas/speaker.schema.json"
+    Layer:
+      $ref: "./schemas/layer.schema.json"
+    Job:
+      $ref: "./schemas/job.schema.json"
+    JobRun:
+      $ref: "./schemas/job_run.schema.json"
+    JobEvent:
+      $ref: "./schemas/job_event.schema.json"
+    StorageRef:
+      $ref: "./schemas/storage_ref.schema.json"
+
+    # Explicit partial views (lists, embeds, etc.)
+    VideoSummary:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        source_type: { type: string }
+        source_uri: { type: string }
+        created_at: { type: string, format: date-time }
+
+    TranscriptSummary:
+      type: object
+      additionalProperties: false
+      required: [id, video_id, status]
+      properties:
+        id: { type: string }
+        video_id: { type: string }
+        status: { type: string }
+        language: { type: string }
+        created_at: { type: string, format: date-time }
+
+  responses: {}

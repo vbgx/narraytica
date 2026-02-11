@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: narralytica-api
+Version: 0.1.0
+Summary: Narralytica API service
+Requires-Python: >=3.13
+Requires-Dist: fastapi>=0.128.0
+Requires-Dist: uvicorn[standard]>=0.40.0
+Requires-Dist: pydantic-settings>=2.2.1
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: pyyaml>=6.0.1
+Requires-Dist: sqlalchemy>=2.0.30
+Requires-Dist: psycopg[binary]>=3.2.1
+Requires-Dist: alembic>=1.13.1
+Requires-Dist: prometheus-client>=0.20.0
+Requires-Dist: opentelemetry-api>=1.26.0
+Requires-Dist: opentelemetry-sdk>=1.26.0
+Requires-Dist: opentelemetry-exporter-otlp>=1.26.0
+Requires-Dist: opentelemetry-instrumentation-fastapi>=0.47b0
+Requires-Dist: opentelemetry-instrumentation-asgi>=0.47b0
