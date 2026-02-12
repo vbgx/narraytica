@@ -13,6 +13,7 @@ from telemetry.ingest import JobCtx, emit_metric, log_error, log_event, timed_ph
 from upload.handler import migrate_upload_to_canonical
 from youtube.downloader import download_youtube_video
 
+from db.jobs import create_or_get_transcription_job
 from db.videos import persist_video_metadata
 
 logger = logging.getLogger("ingest-worker")
@@ -248,6 +249,25 @@ class IngestWorker:
         )
 
         persist_video_metadata(norm, source_url=source_url)
+
+        transcription_job_id, transcription_idempotency_key = (
+            create_or_get_transcription_job(
+                video_id=job["video_id"],
+                audio_bucket=audio_bucket,
+                audio_key=audio_key,
+                audio_size_bytes=norm.audio_ref.size_bytes,
+            )
+        )
+
+        log_event(
+            JobCtx(job_id=job["id"], video_id=job["video_id"]),
+            "transcription_job_queued",
+            job_type="transcription",
+            transcription_job_id=transcription_job_id,
+            idempotency_key=transcription_idempotency_key,
+            audio_bucket=audio_bucket,
+            audio_key=audio_key,
+        )
 
         logger.info(
             "video_metadata_persisted",
