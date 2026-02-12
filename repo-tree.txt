@@ -336,9 +336,13 @@
 │       │   │   ├── __pycache__
 │       │   │   │   └── worker.cpython-313.pyc
 │       │   │   ├── db
+│       │   │   │   ├── __init__.py
 │       │   │   │   ├── __pycache__
+│       │   │   │   │   ├── __init__.cpython-313.pyc
+│       │   │   │   │   ├── jobs.cpython-313.pyc
 │       │   │   │   │   ├── postgres.cpython-313.pyc
 │       │   │   │   │   └── videos.cpython-313.pyc
+│       │   │   │   ├── jobs.py
 │       │   │   │   ├── postgres.py
 │       │   │   │   └── videos.py
 │       │   │   ├── domain
@@ -382,6 +386,34 @@
 │       │   ├── README.md
 │       │   ├── RUNBOOK.md
 │       │   ├── src
+│       │   │   ├── __init__.py
+│       │   │   ├── __pycache__
+│       │   │   │   └── audio_fetch.cpython-313.pyc
+│       │   │   ├── asr
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   ├── errors.cpython-313.pyc
+│       │   │   │   │   ├── interface.cpython-313.pyc
+│       │   │   │   │   ├── registry.cpython-313.pyc
+│       │   │   │   │   └── types.cpython-313.pyc
+│       │   │   │   ├── errors.py
+│       │   │   │   ├── interface.py
+│       │   │   │   ├── providers
+│       │   │   │   │   ├── __pycache__
+│       │   │   │   │   │   └── faster_whisper_provider.cpython-313.pyc
+│       │   │   │   │   └── faster_whisper_provider.py
+│       │   │   │   ├── registry.py
+│       │   │   │   └── types.py
+│       │   │   ├── audio_fetch.py
+│       │   │   ├── db
+│       │   │   │   ├── __init__.py
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   ├── __init__.cpython-313.pyc
+│       │   │   │   │   ├── jobs.cpython-313.pyc
+│       │   │   │   │   ├── postgres.cpython-313.pyc
+│       │   │   │   │   └── transcripts.cpython-313.pyc
+│       │   │   │   ├── jobs.py
+│       │   │   │   ├── postgres.py
+│       │   │   │   └── transcripts.py
 │       │   │   ├── providers
 │       │   │   ├── segmenter
 │       │   │   └── worker.py
@@ -420,4 +452,4 @@
 ├── turbo.json
 └── uv.lock
 
-164 directories, 257 files
+171 directories, 282 files

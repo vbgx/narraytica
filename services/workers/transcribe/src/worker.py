@@ -11,6 +11,7 @@ from asr.errors import AsrError
 from asr.registry import get_provider
 from audio_fetch import fetch_audio_to_tmp, resolve_audio_ref
 from packages.shared.storage.s3_client import S3ObjectStorageClient
+from segmenter.timecodes import normalize_segments
 
 from db.jobs import (
     claim_next_transcription_job,
@@ -105,7 +106,12 @@ def _run_asr(job: dict[str, Any]) -> None:
         "provider": provider.name,
         "language": res.language,
         "text": res.text,
-        "segments": [s.__dict__ for s in res.segments],
+        "segments": normalize_segments(
+            [
+                {"start_s": s.start_s, "end_s": s.end_s, "text": s.text}
+                for s in res.segments
+            ]
+        ),
         "asr": res.raw,
         "audio_ref": {"bucket": bucket, "key": key},
     }

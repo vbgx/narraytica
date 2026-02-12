@@ -1,1 +1,47 @@
-# TODO: stub (generated template) — fill when implementing
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/segment.schema.json",
+  "title": "TranscriptSegment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["start_ms", "end_ms", "text"],
+  "properties": {
+    "start_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Segment start time in milliseconds (inclusive)."
+    },
+    "end_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Segment end time in milliseconds (exclusive). Must be > start_ms."
+    },
+    "text": {
+      "type": "string",
+      "description": "Segment text."
+    },
+    "words": {
+      "type": ["array", "null"],
+      "description": "Optional word-level timing (if provider supports it).",
+      "items": { "$ref": "#/$defs/word" }
+    }
+  },
+  "$defs": {
+    "word": {
+      "title": "TranscriptWord",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_ms", "end_ms", "text"],
+      "properties": {
+        "start_ms": { "type": "integer", "minimum": 0 },
+        "end_ms": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string", "minLength": 1 },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

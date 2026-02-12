@@ -1,1 +1,57 @@
-# TODO: stub (generated template) — fill when implementing
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/transcript.schema.json",
+  "title": "Transcript",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["video_id", "provider", "text", "segments", "audio_ref"],
+  "properties": {
+    "transcript_id": {
+      "type": "string",
+      "description": "Optional transcript UUID (may be set by the worker / DB)."
+    },
+    "video_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "type": ["string", "null"],
+      "description": "BCP-47-ish language code when known (e.g. en, fr)."
+    },
+    "text": {
+      "type": "string",
+      "description": "Full transcript text."
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "$ref": "segment.schema.json" }
+    },
+    "audio_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bucket", "key"],
+      "properties": {
+        "bucket": { "type": "string", "minLength": 1 },
+        "key": { "type": "string", "minLength": 1 }
+      }
+    },
+    "storage_ref": {
+      "description": "Optional pointer to the stored transcript artifact.",
+      "$ref": "storage_ref.schema.json"
+    },
+    "asr": {
+      "type": ["object", "null"],
+      "additionalProperties": true,
+      "description": "Raw provider output (opaque)."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
