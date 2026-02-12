@@ -57,12 +57,17 @@ jobs:
       - name: Format check (Python)
         run: uv run ruff format --check .
 
-      - name: Tests (Python - unit/contract only)
+      - name: Tests (Python - root)
         run: |
           uv run pytest -q \
+            --ignore=services/api/tests \
             --ignore=services/workers/ingest/tests/integration \
             --ignore=services/workers/transcribe/tests/integration \
             --ignore=services/workers/transcription/tests/integration
+
+      - name: Tests (Python - services/api)
+        run: |
+          uv run --project services/api pytest -q
 
       - name: Build (Node)
         run: pnpm -r build
