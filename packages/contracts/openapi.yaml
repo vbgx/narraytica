@@ -1,222 +1,86 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: Narralytica API
   version: 0.1.0
-  description: Canonical API contract. All shapes must reference packages/contracts/schemas/*.
-
-servers:
-  - url: http://localhost:8000
-
 paths:
-  /health:
+  /search:
     get:
-      operationId: healthCheck
+      summary: Search segments (lexical + optional vector)
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: language
+          schema: { type: string }
+        - in: query
+          name: source
+          schema: { type: string }
+        - in: query
+          name: video_id
+          schema: { type: string }
+        - in: query
+          name: speaker_id
+          schema: { type: string }
+        - in: query
+          name: date_from
+          schema: { type: string }
+        - in: query
+          name: date_to
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, default: 0 }
+        - in: query
+          name: semantic
+          schema: { type: boolean }
       responses:
         "200":
           description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: false
-                required: [status]
-                properties:
-                  status:
-                    type: string
-
-  /videos:
-    get:
-      operationId: listVideos
+    post:
+      summary: Search segments (body)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchRequest"
       responses:
         "200":
-          description: List videos
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/VideoSummary"
-
-  /videos/{video_id}:
-    get:
-      operationId: getVideo
-      parameters:
-        - name: video_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Video
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Video"
-
-  /transcripts:
-    get:
-      operationId: listTranscripts
-      responses:
-        "200":
-          description: List transcripts
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TranscriptSummary"
-
-  /transcripts/{transcript_id}:
-    get:
-      operationId: getTranscript
-      parameters:
-        - name: transcript_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Transcript
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Transcript"
-
-  /segments:
-    get:
-      operationId: listSegments
-      parameters:
-        - name: transcript_id
-          in: query
-          required: false
-          schema: { type: string }
-      responses:
-        "200":
-          description: List segments (optionally filtered by transcript)
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Segment"
-
-  /segments/{segment_id}:
-    get:
-      operationId: getSegment
-      parameters:
-        - name: segment_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Segment
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Segment"
-
-  /speakers:
-    get:
-      operationId: listSpeakers
-      responses:
-        "200":
-          description: List speakers
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Speaker"
-
-  /speakers/{speaker_id}:
-    get:
-      operationId: getSpeaker
-      parameters:
-        - name: speaker_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Speaker
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Speaker"
-
-  /jobs:
-    get:
-      operationId: listJobs
-      responses:
-        "200":
-          description: List jobs
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Job"
-
-  /jobs/{job_id}:
-    get:
-      operationId: getJob
-      parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Job
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Job"
-
+          description: OK
 components:
   schemas:
-    # Canonical models (must match JSON Schemas)
-    Video:
-      $ref: "./schemas/video.schema.json"
-    Transcript:
-      $ref: "./schemas/transcript.schema.json"
-    Segment:
-      $ref: "./schemas/segment.schema.json"
-    Speaker:
-      $ref: "./schemas/speaker.schema.json"
-    Layer:
-      $ref: "./schemas/layer.schema.json"
-    Job:
-      $ref: "./schemas/job.schema.json"
-    JobRun:
-      $ref: "./schemas/job_run.schema.json"
-    JobEvent:
-      $ref: "./schemas/job_event.schema.json"
-    StorageRef:
-      $ref: "./schemas/storage_ref.schema.json"
-
-    # Explicit partial views (lists, embeds, etc.)
-    VideoSummary:
+    SearchRequest:
       type: object
       additionalProperties: false
-      required: [id]
       properties:
-        id: { type: string }
-        title: { type: string }
-        source_type: { type: string }
-        source_uri: { type: string }
-        created_at: { type: string, format: date-time }
-
-    TranscriptSummary:
+        query: { type: string, nullable: true }
+        filters: { type: object, nullable: true }
+        limit: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        offset: { type: integer, minimum: 0, default: 0 }
+        semantic: { type: boolean, nullable: true }
+    SearchHit:
       type: object
       additionalProperties: false
-      required: [id, video_id, status]
+      required: [segment_id, score]
       properties:
-        id: { type: string }
-        video_id: { type: string }
-        status: { type: string }
-        language: { type: string }
-        created_at: { type: string, format: date-time }
-
-  responses: {}
+        segment_id: { type: string }
+        score: { type: number }
+        lexical_rank: { type: integer, nullable: true }
+        vector_rank: { type: integer, nullable: true }
+        source: { type: object, nullable: true }
+    SearchResponse:
+      type: object
+      additionalProperties: false
+      required: [items, limit, offset, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchHit"
+        limit: { type: integer }
+        offset: { type: integer }
+        total: { type: integer }
