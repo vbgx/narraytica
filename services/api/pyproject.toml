@@ -26,6 +26,7 @@ dependencies = [
   "opentelemetry-instrumentation-asgi>=0.47b0",
   "boto3>=1.42.47",
   "jsonschema>=4.26.0",
+  "faster-whisper>=1.2.1",
 ]
 
 [tool.uv]
