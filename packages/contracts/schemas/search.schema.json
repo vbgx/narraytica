@@ -1,115 +1,184 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://narralytica.ai/schemas/search.schema.json",
-  "title": "SearchContracts",
+  "title": "SearchResponseV1",
   "type": "object",
   "additionalProperties": false,
+  "required": ["items", "page"],
   "properties": {
-    "request": { "$ref": "#/$defs/SearchRequest" },
-    "response": { "$ref": "#/$defs/SearchResponse" }
+    "items": {
+      "type": "array",
+      "description": "Search hits (merged lexical + vector).",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "page": { "$ref": "#/$defs/page" }
   },
-  "required": ["request", "response"],
   "$defs": {
-    "SearchMode": {
+    "id": {
       "type": "string",
-      "enum": ["hybrid", "lexical", "vector"]
+      "minLength": 1
     },
-    "SearchFilters": {
+    "iso_datetime": {
+      "type": "string",
+      "description": "RFC3339 / ISO8601 date-time (UTC recommended)."
+    },
+    "item": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["segment", "score"],
       "properties": {
-        "language": { "type": ["string", "null"] },
-        "source": { "type": ["string", "null"] },
-        "video_id": { "type": ["string", "null"] },
-        "speaker_id": { "type": ["string", "null"] },
-        "date_from": { "type": ["string", "null"], "format": "date-time" },
-        "date_to": { "type": ["string", "null"], "format": "date-time" }
-      }
-    },
-    "SearchRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["query", "limit", "offset"],
-      "properties": {
-        "query": { "type": ["string", "null"] },
-        "mode": { "$ref": "#/$defs/SearchMode" },
-        "filters": { "$ref": "#/$defs/SearchFilters" },
-        "limit": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100
+        "segment": { "$ref": "#/$defs/segment" },
+        "video": {
+          "anyOf": [{ "$ref": "#/$defs/video" }, { "type": "null" }]
         },
-        "offset": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "SegmentSearchDocument": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["segment_id", "video_id", "start_ms", "end_ms", "text"],
-      "properties": {
-        "segment_id": { "type": "string", "minLength": 1 },
-        "video_id": { "type": "string", "minLength": 1 },
-        "start_ms": { "type": "integer", "minimum": 0 },
-        "end_ms": { "type": "integer", "minimum": 0 },
-        "text": { "type": "string", "minLength": 1 },
-        "language": { "type": ["string", "null"] },
-        "source": { "type": ["string", "null"] },
-        "speaker_id": { "type": ["string", "null"] },
-        "speaker_name": { "type": ["string", "null"] },
-        "created_at": { "type": ["string", "null"], "format": "date-time" },
-        "updated_at": { "type": ["string", "null"], "format": "date-time" },
-        "snippet": { "type": ["string", "null"] },
-        "tags": {
-          "type": ["array", "null"],
-          "items": { "type": "string" }
-        }
-      }
-    },
-    "SearchScores": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "combined": { "type": ["number", "null"] },
-        "lexical": { "type": ["number", "null"] },
-        "vector": { "type": ["number", "null"] }
-      }
-    },
-    "SearchResultItem": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["segment", "scores"],
-      "properties": {
-        "segment": { "$ref": "#/$defs/SegmentSearchDocument" },
-        "scores": { "$ref": "#/$defs/SearchScores" },
+        "speaker": {
+          "anyOf": [{ "$ref": "#/$defs/speaker" }, { "type": "null" }]
+        },
         "highlights": {
           "type": ["array", "null"],
-          "items": { "type": "string" }
+          "items": { "$ref": "#/$defs/highlight" }
+        },
+        "score": { "$ref": "#/$defs/score" }
+      }
+    },
+    "segment": {
+      "title": "SearchSegment",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "video_id", "start_ms", "end_ms", "text"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "video_id": { "$ref": "#/$defs/id" },
+        "transcript_id": {
+          "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+        },
+        "speaker_id": {
+          "anyOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+        },
+        "segment_index": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "start_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string"
+        },
+        "language": {
+          "type": ["string", "null"],
+          "minLength": 2
+        },
+        "source": {
+          "type": ["string", "null"]
+        },
+        "created_at": {
+          "anyOf": [{ "$ref": "#/$defs/iso_datetime" }, { "type": "null" }]
+        },
+        "updated_at": {
+          "anyOf": [{ "$ref": "#/$defs/iso_datetime" }, { "type": "null" }]
         }
       }
     },
-    "SearchPage": {
+    "video": {
+      "title": "SearchVideo",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": {
+          "type": ["string", "null"]
+        },
+        "source": {
+          "type": ["string", "null"]
+        },
+        "published_at": {
+          "anyOf": [{ "$ref": "#/$defs/iso_datetime" }, { "type": "null" }]
+        }
+      }
+    },
+    "speaker": {
+      "title": "SearchSpeaker",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "highlight": {
+      "title": "SearchHighlight",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "text"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "enum": ["text", "title", "speaker", "metadata"]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Highlighted snippet (may contain tags like <em> depending on backend)."
+        }
+      }
+    },
+    "score": {
+      "title": "SearchScore",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["combined"],
+      "properties": {
+        "combined": {
+          "type": "number",
+          "description": "Final merged score."
+        },
+        "lexical": {
+          "type": ["number", "null"],
+          "description": "Optional lexical score (backend-dependent)."
+        },
+        "vector": {
+          "type": ["number", "null"],
+          "description": "Optional vector similarity score (backend-dependent)."
+        },
+        "lexical_rank": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "vector_rank": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        }
+      }
+    },
+    "page": {
+      "title": "SearchPage",
       "type": "object",
       "additionalProperties": false,
       "required": ["limit", "offset"],
       "properties": {
-        "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
-        "offset": { "type": "integer", "minimum": 0 },
-        "total": { "type": ["integer", "null"], "minimum": 0 }
-      }
-    },
-    "SearchResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["items", "page"],
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/SearchResultItem" }
+        "limit": {
+          "type": "integer",
+          "minimum": 1
         },
-        "page": { "$ref": "#/$defs/SearchPage" }
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Optional total hits after merge (may be omitted or null in V1)."
+        }
       }
     }
   }

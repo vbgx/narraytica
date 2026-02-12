@@ -40,6 +40,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponseV1"
     post:
       summary: Search segments (body)
       requestBody:
@@ -47,13 +51,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SearchRequest"
+              $ref: "#/components/schemas/SearchRequestV1"
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponseV1"
 components:
   schemas:
-    SearchRequest:
+    SearchRequestV1:
       type: object
       additionalProperties: false
       properties:
@@ -62,25 +70,104 @@ components:
         limit: { type: integer, minimum: 1, maximum: 100, default: 20 }
         offset: { type: integer, minimum: 0, default: 0 }
         semantic: { type: boolean, nullable: true }
-    SearchHit:
+
+    SearchResponseV1:
       type: object
       additionalProperties: false
-      required: [segment_id, score]
-      properties:
-        segment_id: { type: string }
-        score: { type: number }
-        lexical_rank: { type: integer, nullable: true }
-        vector_rank: { type: integer, nullable: true }
-        source: { type: object, nullable: true }
-    SearchResponse:
-      type: object
-      additionalProperties: false
-      required: [items, limit, offset, total]
+      required: [items, page]
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/SearchHit"
-        limit: { type: integer }
-        offset: { type: integer }
-        total: { type: integer }
+            $ref: "#/components/schemas/SearchItemV1"
+        page:
+          $ref: "#/components/schemas/SearchPageV1"
+
+    SearchItemV1:
+      type: object
+      additionalProperties: false
+      required: [segment, score]
+      properties:
+        segment:
+          $ref: "#/components/schemas/SearchSegmentV1"
+        video:
+          oneOf:
+            - $ref: "#/components/schemas/SearchVideoV1"
+            - type: "null"
+        speaker:
+          oneOf:
+            - $ref: "#/components/schemas/SearchSpeakerV1"
+            - type: "null"
+        highlights:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/SearchHighlightV1"
+        score:
+          $ref: "#/components/schemas/SearchScoreV1"
+
+    SearchSegmentV1:
+      type: object
+      additionalProperties: false
+      required: [id, video_id, start_ms, end_ms, text]
+      properties:
+        id: { type: string }
+        video_id: { type: string }
+        transcript_id: { type: string, nullable: true }
+        speaker_id: { type: string, nullable: true }
+        segment_index: { type: integer, nullable: true, minimum: 0 }
+        start_ms: { type: integer, minimum: 0 }
+        end_ms: { type: integer, minimum: 0 }
+        text: { type: string }
+        language: { type: string, nullable: true }
+        source: { type: string, nullable: true }
+        created_at: { type: string, nullable: true }
+        updated_at: { type: string, nullable: true }
+
+    SearchVideoV1:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id: { type: string }
+        title: { type: string, nullable: true }
+        source: { type: string, nullable: true }
+        published_at: { type: string, nullable: true }
+
+    SearchSpeakerV1:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id: { type: string }
+        name: { type: string, nullable: true }
+
+    SearchHighlightV1:
+      type: object
+      additionalProperties: false
+      required: [field, text]
+      properties:
+        field:
+          type: string
+          enum: [text, title, speaker, metadata]
+        text: { type: string }
+
+    SearchScoreV1:
+      type: object
+      additionalProperties: false
+      required: [combined]
+      properties:
+        combined: { type: number }
+        lexical: { type: number, nullable: true }
+        vector: { type: number, nullable: true }
+        lexical_rank: { type: integer, nullable: true, minimum: 1 }
+        vector_rank: { type: integer, nullable: true, minimum: 1 }
+
+    SearchPageV1:
+      type: object
+      additionalProperties: false
+      required: [limit, offset]
+      properties:
+        limit: { type: integer, minimum: 1 }
+        offset: { type: integer, minimum: 0 }
+        total: { type: integer, nullable: true, minimum: 0 }
