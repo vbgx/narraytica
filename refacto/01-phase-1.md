@@ -220,7 +220,7 @@ Schemas incomplets / trop stricts
 Tests trop artificiels
 → ajouter 1 payload “réaliste” dérivé d’un exemple E2E.
 
-Issue 1.3 — CI: No schema duplication (single source of truth)
+## Issue 1.3 — CI: No schema duplication (single source of truth)
 
 Title: ci(contracts): forbid JSON Schema duplication outside packages/contracts/schemas
 Labels: ci, contracts, drift

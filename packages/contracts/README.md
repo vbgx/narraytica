@@ -1,88 +1,147 @@
-# Contracts — Narralytica
+# Narralytica Contracts — Job model (runtime)
 
-This package defines the **canonical contracts** used across the Narralytica platform.
+This document explains the *runtime contract model* for Jobs.
 
-Contracts ensure that all services, workers, and external consumers share a **consistent understanding of data structures and APIs**.
+Contracts are the canonical source of truth for:
+- API payload shapes (request/response)
+- Worker runtime payloads (events, run state)
+- Stored representations (DB documents or records)
 
-They are the backbone of interoperability.
-
----
-
-## 🎯 Purpose
-
-This package exists to:
-
-- Define API schemas (OpenAPI)
-- Define canonical JSON schemas for core entities
-- Ensure data compatibility across services
-- Prevent drift between producers and consumers
-
-If two components exchange structured data, the contract must live here.
+**Rule:** code must conform to contracts; contracts must be explicit, versionable, and testable.
 
 ---
 
-## 📦 What’s Inside
+## Why do we have 3 schemas: `job`, `job_run`, `job_event`?
 
-| File / Folder | Purpose |
-|--------------|---------|
-| `openapi.yaml` | Main API contract |
-| `schemas/` | JSON Schemas for platform entities |
-| `conventions.md` | Naming and API design rules |
-| `changelog.md` | Version history of contract changes |
+Because they represent **three different kinds of truth** in a distributed / asynchronous system:
 
----
+1. **Job = intent (what should happen)**
+2. **JobRun = attempt (a concrete execution of that job)**
+3. **JobEvent = log (append-only facts emitted during execution)**
 
-## 🧱 Core Entities Covered
-
-Contracts exist for:
-
-- Videos
-- Transcripts
-- Segments
-- Speakers
-- AI enrichment layers
-- Search requests and responses
-
-These represent the **platform’s shared language**.
+Separating these prevents drift, preserves auditability, and makes retries safe.
 
 ---
 
-## 🔄 Versioning Rules
+## `Job` — the durable intent
 
-When changing a contract:
+A `Job` is a durable command that represents **an intent to perform work**.
 
-1. Update the relevant schema or OpenAPI spec
-2. Add an entry to `changelog.md`
-3. Ensure all affected services are updated
-4. Maintain backward compatibility when possible
+Examples:
+- Ingest a video
+- Transcribe audio
+- Diarize speakers
+- Compute AI layers
+- Index segments
 
-Breaking changes must be clearly documented.
+### What `Job` is for
+- A stable reference for API and product views.
+- A single identifier to attach status and lifecycle to.
+- A **business-level** representation of “work requested”.
+
+### What `Job` is NOT
+- It is not a “run”.
+- It is not a stream of logs.
+- It should not encode transient execution details (worker hostname, attempt counters, etc.).
+
+### Typical `Job` fields (conceptually)
+- `id` — stable identifier
+- `kind` — the type of work (`ingest`, `transcribe`, `enrich`, `index`, …)
+- `status` — current state (`queued`, `running`, `succeeded`, `failed`, `canceled`, …)
+- `created_at`, `updated_at`
+- (optional) `input` / `params` — stable, deterministic job inputs
+
+### Invariants (v0)
+- `id` must be stable and unique.
+- `kind` is a controlled vocabulary (enum).
+- `status` is a controlled vocabulary (enum).
+- `status` reflects the *latest known truth* (not every intermediate step).
+- A `Job` can exist without any `JobRun` yet (queued / scheduled).
 
 ---
 
-## 🚫 What Does NOT Belong Here
+## `JobRun` — an execution attempt
 
-- Database migration SQL
-- Internal service DTOs
-- Worker-specific payload formats
-- Operational runbooks
+A `JobRun` represents a **single attempt** to execute a job.
 
-This package defines **external and cross-service contracts only**.
+Why it exists:
+- retries are normal (timeouts, worker crashes, rate limiting, infra hiccups)
+- reprocessing can happen (manual rerun, backfill, replay)
+- “job intent” must not be overwritten by attempt data
+
+### What `JobRun` is for
+- Capturing attempt-level metadata and timing.
+- Distinguishing multiple attempts from the same job.
+- Supporting correct “retry semantics”.
+
+### Typical `JobRun` fields (conceptually)
+- `id` — run identifier
+- `job_id` — foreign key / reference to `Job`
+- `status` — run-level state (`running`, `succeeded`, `failed`, …)
+- `started_at`, (optional) `finished_at`
+- (optional) `attempt` number or ordering key
+- (optional) execution metadata (worker id, region, etc.) — avoid leaking into `Job`
+
+### Invariants (v0)
+- `JobRun.job_id` must reference an existing `Job`.
+- A `Job` may have **multiple** runs over time.
+- At most one run is “active” (running) at a time (recommended invariant).
 
 ---
 
-## 🔗 Relationship with Code
+## `JobEvent` — append-only runtime facts
 
-All services should:
+A `JobEvent` is an **append-only fact** emitted during runtime.
 
-- Validate inputs and outputs against these schemas
-- Generate client/server types when possible
-- Treat these contracts as the single source of truth
+It is the canonical replacement for:
+- ad-hoc log lines
+- unstructured status blobs
+- hidden side channels (print statements, random JSON in DB)
+
+### What `JobEvent` is for
+- Observability: stable, queryable runtime events.
+- Auditability: what happened, when, and why.
+- Replay / debugging: reconstruct job progression from facts.
+
+### Typical `JobEvent` fields (conceptually)
+- `id` — event identifier
+- `job_id` — always present
+- `run_id` — present when event is tied to a specific attempt
+- `type` — event name (`job.status_changed`, `progress`, `artifact.created`, `error`, …)
+- `ts` — timestamp
+- `payload` — event-specific details (structured, contract-first)
+
+### Invariants (v0)
+- Events are **append-only** (never mutated).
+- `type` is controlled vocabulary (enum) or a namespaced string set.
+- `job_id` is required.
+- `run_id` is required for attempt-scoped events (recommended).
+- `payload` should remain backward compatible when extended (additive changes).
 
 ---
 
-## 📚 Related Documentation
+## Recommended lifecycle (conceptual)
 
-- API architecture → `docs/architecture/api.md`
-- System specifications → `docs/specs/`
-- Delivery planning → `/epics`
+1) API creates a `Job`:
+- status = `queued`
+
+2) Worker picks job and starts an attempt:
+- create `JobRun` (status = `running`)
+- emit `JobEvent` ("job.status_changed": queued → running)
+
+3) Worker produces intermediate events:
+- "progress", "layer.completed", "artifact.created", etc.
+
+4) Worker completes:
+- set `JobRun` status = succeeded/failed
+- update `Job` status accordingly
+- emit terminal `JobEvent` (with final status + summary)
+
+---
+
+## Drift prevention rules (the point of contracts)
+
+- API should not invent new job fields without updating schemas + contract tests.
+- Workers should not emit ad-hoc event shapes: add them in `job_event.schema.json`.
+- Runtime metadata belongs in `JobRun` or `JobEvent`, not in `Job`.
+- Prefer adding fields (backward compatible) over renaming/breaking.

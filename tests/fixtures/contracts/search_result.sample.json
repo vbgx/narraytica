@@ -1,0 +1,29 @@
+{
+  "page": {
+    "limit": 10,
+    "offset": 0
+  },
+  "items": [
+    {
+      "segment": {
+        "id": "seg_01",
+        "video_id": "vid_01",
+        "start_ms": 0,
+        "end_ms": 1000,
+        "text": "Hello world",
+        "language": "en",
+        "source": "whisper",
+        "created_at": "2026-01-01T00:00:00Z",
+        "updated_at": "2026-01-01T00:00:00Z"
+      },
+      "score": {
+        "combined": 1.0,
+        "lexical": 1.0,
+        "vector": 0.0
+      },
+      "highlights": [
+        { "field": "text", "text": "<em>Hello</em> world" }
+      ]
+    }
+  ]
+}

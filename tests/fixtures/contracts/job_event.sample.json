@@ -1,0 +1,11 @@
+{
+  "id": "evt_01",
+  "job_id": "job_01",
+  "run_id": "run_01",
+  "event_type": "job.status_changed",
+  "created_at": "2026-01-01T00:00:01Z",
+  "payload": {
+    "from": "queued",
+    "to": "running"
+  }
+}
