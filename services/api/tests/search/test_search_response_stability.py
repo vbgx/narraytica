@@ -1,4 +1,35 @@
-def test_search_response_is_stably_sorted(client, monkeypatch):
+from typing import Any
+
+from fastapi.testclient import TestClient
+
+
+def _make_client() -> TestClient:
+    from services.api.src.main import create_app
+
+    app = create_app()
+
+    # Override auth for tests.
+    import services.api.src.auth.deps as auth_deps
+
+    def _fake_require_api_key() -> dict[str, Any]:
+        return {"api_key_id": "k_test", "name": "tests", "scopes": None}
+
+    app.dependency_overrides[auth_deps.require_api_key] = _fake_require_api_key
+
+    # Override DB dependency: this test must not require DATABASE_URL.
+    import services.api.src.services.db as db_deps
+
+    def _fake_db():
+        yield None
+
+    app.dependency_overrides[db_deps.get_db] = _fake_db
+
+    return TestClient(app, raise_server_exceptions=True)
+
+
+def test_search_response_is_stably_sorted(monkeypatch):
+    client = _make_client()
+
     import services.api.src.routes.search as search_module
 
     # Two segments with same combined score to exercise tie-break.

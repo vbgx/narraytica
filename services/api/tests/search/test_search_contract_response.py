@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
+from typing import Any
 
+from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
 
@@ -15,12 +17,38 @@ def _find_repo_root(start: Path) -> Path:
         cur = cur.parent
 
 
-def test_search_response_matches_contract(client, monkeypatch):
+def _make_client() -> TestClient:
+    from services.api.src.main import create_app
+
+    app = create_app()
+
+    # Override auth for tests: focus on response contract.
+    import services.api.src.auth.deps as auth_deps
+
+    def _fake_require_api_key() -> dict[str, Any]:
+        return {"api_key_id": "k_test", "name": "tests", "scopes": None}
+
+    app.dependency_overrides[auth_deps.require_api_key] = _fake_require_api_key
+
+    # Override DB dependency: contract tests must not require DATABASE_URL.
+    import services.api.src.services.db as db_deps
+
+    def _fake_db():
+        yield None
+
+    app.dependency_overrides[db_deps.get_db] = _fake_db
+
+    return TestClient(app, raise_server_exceptions=True)
+
+
+def test_search_response_matches_contract(monkeypatch):
     """
     Contract test:
     We mock search backends so this test validates
     ONLY API response structure against JSON Schema.
     """
+
+    client = _make_client()
 
     # --- Mock OpenSearch search ---
     def fake_opensearch_search(body):
