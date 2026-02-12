@@ -141,7 +141,7 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
           AWS_EC2_METADATA_DISABLED: "true"
         run: |
-          python - <<'PY'
+          uv run python - <<'PY'
           import boto3
 
           s3 = boto3.client(
