@@ -1,17 +1,45 @@
 {
+  "name": "narralytica-segments-v1",
   "vectors": {
-    "embedding": {
-      "size": 768,
-      "distance": "Cosine"
-    }
+    "size": 1536,
+    "distance": "Cosine"
   },
   "optimizers_config": {
-    "default_segment_number": 2
+    "default_segment_number": 2,
+    "memmap_threshold": 20000
   },
   "hnsw_config": {
     "m": 16,
     "ef_construct": 128
   },
-  "replication_factor": 1,
-  "write_consistency_factor": 1
+  "wal_config": {
+    "wal_capacity_mb": 64,
+    "wal_segments_ahead": 0
+  },
+  "payload_schema": {
+    "segment_id": { "type": "keyword" },
+    "video_id": { "type": "keyword" },
+    "transcript_id": { "type": "keyword" },
+    "tenant_id": { "type": "keyword" },
+
+    "speaker_id": { "type": "keyword" },
+
+    "language": { "type": "keyword" },
+    "source": { "type": "keyword" },
+
+    "segment_index": { "type": "integer" },
+    "start_ms": { "type": "integer" },
+    "end_ms": { "type": "integer" },
+
+    "created_at": { "type": "keyword" },
+    "updated_at": { "type": "keyword" }
+  },
+  "payload_indexes": [
+    { "field_name": "tenant_id", "field_schema": "keyword" },
+    { "field_name": "video_id", "field_schema": "keyword" },
+    { "field_name": "transcript_id", "field_schema": "keyword" },
+    { "field_name": "speaker_id", "field_schema": "keyword" },
+    { "field_name": "language", "field_schema": "keyword" },
+    { "field_name": "source", "field_schema": "keyword" }
+  ]
 }

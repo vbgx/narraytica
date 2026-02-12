@@ -1,1 +1,16 @@
-# TODO: stub (generated template) — fill when implementing
+{
+  "collections": [
+    {
+      "name": "narralytica-segments-v1",
+      "vector": { "size": 1536, "distance": "Cosine" },
+      "payload_min": [
+        "segment_id",
+        "video_id",
+        "language",
+        "source",
+        "created_at",
+        "updated_at"
+      ]
+    }
+  ]
+}
