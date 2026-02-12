@@ -4,13 +4,11 @@ from fastapi import FastAPI
 
 from .config import settings
 from .middleware import RateLimitMiddleware
-from .routes import search as search_routes
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Narralytica API")
 
-    # Middleware
     app.add_middleware(
         RateLimitMiddleware,
         enabled=settings.rate_limit_enabled,
@@ -21,7 +19,10 @@ def create_app() -> FastAPI:
     )
 
     # Routers
-    app.include_router(search_routes.router, prefix="/api/v1")
+    from .routes import ingest, search
+
+    app.include_router(ingest.router, prefix="/api/v1")
+    app.include_router(search.router, prefix="/api/v1")
 
     return app
 
