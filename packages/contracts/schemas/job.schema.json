@@ -12,7 +12,8 @@
 
     "type": {
       "type": "string",
-      "description": "Logical job type (ingest/transcribe/diarize/enrich/index)."
+      "enum": ["ingest", "transcribe", "transcription", "diarize", "enrich", "index"],
+      "description": "Logical job type. Prefer `transcription` (v1). `transcribe` accepted for backward compatibility."
     },
 
     "status": {

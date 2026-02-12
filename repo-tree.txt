@@ -36,7 +36,6 @@
 │   │   └── README.md
 │   └── staging
 │       └── README.md
-├── docker-compose.yml
 ├── docs
 │   ├── README.md
 │   ├── adr
@@ -187,11 +186,18 @@
 │       │   └── CONVENTIONS.md
 │       ├── language
 │       ├── security
+│       ├── storage
+│       │   ├── __pycache__
+│       │   │   ├── client.cpython-313.pyc
+│       │   │   └── s3_client.cpython-313.pyc
+│       │   ├── client.py
+│       │   └── s3_client.py
 │       └── time
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
 ├── poetry.lock
 ├── pyproject.toml
+├── pytest.ini
 ├── repo-tree.txt
 ├── services
 │   ├── api
@@ -327,11 +333,49 @@
 │       │   ├── README.md
 │       │   ├── RUNBOOK.md
 │       │   ├── src
+│       │   │   ├── __pycache__
+│       │   │   │   └── worker.cpython-313.pyc
+│       │   │   ├── db
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   ├── postgres.cpython-313.pyc
+│       │   │   │   │   └── videos.cpython-313.pyc
+│       │   │   │   ├── postgres.py
+│       │   │   │   └── videos.py
+│       │   │   ├── domain
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   └── job_status.cpython-313.pyc
+│       │   │   │   └── job_status.py
+│       │   │   ├── media
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   └── audio.cpython-313.pyc
+│       │   │   │   └── audio.py
+│       │   │   ├── metadata
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   ├── ffprobe.cpython-313.pyc
+│       │   │   │   │   └── normalize.cpython-313.pyc
+│       │   │   │   ├── ffprobe.py
+│       │   │   │   └── normalize.py
 │       │   │   ├── processors
+│       │   │   ├── telemetry
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   └── ingest.cpython-313.pyc
+│       │   │   │   └── ingest.py
 │       │   │   ├── upload
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   └── handler.cpython-313.pyc
+│       │   │   │   └── handler.py
 │       │   │   ├── worker.py
 │       │   │   └── youtube
+│       │   │       ├── __pycache__
+│       │   │       │   └── downloader.cpython-313.pyc
+│       │   │       └── downloader.py
 │       │   └── tests
+│       │       └── integration
+│       │           ├── __pycache__
+│       │           │   ├── conftest.cpython-313-pytest-9.0.2.pyc
+│       │           │   └── test_ingest_flow.cpython-313-pytest-9.0.2.pyc
+│       │           ├── conftest.py
+│       │           └── test_ingest_flow.py
 │       ├── transcribe
 │       │   ├── CONTRACT.md
 │       │   ├── Dockerfile
@@ -376,4 +420,4 @@
 ├── turbo.json
 └── uv.lock
 
-147 directories, 230 files
+164 directories, 257 files
