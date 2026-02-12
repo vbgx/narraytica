@@ -1,4 +1,80 @@
-# (Garde le reste identique jusqu'à integration-opensearch)
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags-ignore:
+      - "*"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Node deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: false
+
+      - name: Install Python deps (root)
+        run: uv sync --frozen --group dev
+
+      - name: Install Python deps (services/api)
+        run: uv sync --project services/api --frozen --group dev
+
+      - name: Ensure contract deps
+        run: uv pip install jsonschema
+
+      - name: Lint (Node)
+        run: pnpm -r lint
+
+      - name: Lint (Python)
+        run: uv run ruff check .
+
+      - name: Format check (Python)
+        run: uv run ruff format --check .
+
+      - name: Tests (Python - root)
+        run: |
+          uv run pytest -q \
+            --ignore=services/api/tests \
+            --ignore=services/workers/ingest/tests/integration \
+            --ignore=services/workers/transcribe/tests/integration \
+            --ignore=services/workers/transcription/tests/integration
+
+      - name: Tests (Python - services/api)
+        run: |
+          uv run --project services/api pytest -q services/api/tests \
+            --ignore=services/api/tests/integration \
+            -m "not integration and not ingest_integration and not transcribe_integration"
+
+      - name: Build (Node)
+        run: pnpm -r build
 
   integration-opensearch:
     runs-on: ubuntu-latest
@@ -24,7 +100,7 @@
           --health-cmd="curl -fs http://localhost:9200/_cluster/health || exit 1"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=20
+          --health-retries=30
 
     steps:
       - name: Checkout
@@ -58,3 +134,146 @@
       - name: Integration tests (OpenSearch)
         run: |
           uv run --project services/api pytest -q -m "opensearch_integration"
+
+  integration-minio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: lint-test-build
+
+    env:
+      ENV: test
+      DATABASE_URL: postgresql+psycopg://narralytica:narralytica@127.0.0.1:15432/narralytica
+
+      # MinIO/S3 config
+      S3_ENDPOINT: http://127.0.0.1:19000
+      AWS_ENDPOINT_URL: http://127.0.0.1:19000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_S3_ADDRESSING_STYLE: path
+
+      # Buckets (both naming conventions)
+      S3_BUCKET_UPLOADS: uploads
+      S3_BUCKET_AUDIO: audio-tracks
+      S3_BUCKET_TRANSCRIPTS: transcripts
+      UPLOADS_BUCKET: uploads
+      AUDIO_BUCKET: audio-tracks
+      TRANSCRIPTS_BUCKET: transcripts
+
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 15432:5432
+        env:
+          POSTGRES_USER: narralytica
+          POSTGRES_PASSWORD: narralytica
+          POSTGRES_DB: narralytica
+        options: >-
+          --health-cmd "pg_isready -U narralytica"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: false
+
+      - name: Install Python deps (root)
+        run: uv sync --frozen --group dev
+
+      - name: Install Python deps (services/api)
+        run: uv sync --project services/api --frozen --group dev
+
+      - name: Ensure integration deps
+        run: |
+          uv pip install \
+            boto3 \
+            psycopg[binary] \
+            jsonschema \
+            faster-whisper
+
+      - name: Start MinIO
+        run: |
+          docker rm -f minio >/dev/null 2>&1 || true
+          docker run -d \
+            --name minio \
+            -p 19000:9000 \
+            -p 19001:9001 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:RELEASE.2025-01-20T14-49-07Z \
+            server /data --console-address ":9001"
+
+      - name: Wait for MinIO ready
+        run: |
+          for i in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:19000/minio/health/ready >/dev/null; then
+              echo "MinIO ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "MinIO not ready in time" >&2
+          docker logs minio || true
+          exit 1
+
+      - name: Wait for Postgres ready
+        run: |
+          for i in $(seq 1 60); do
+            if pg_isready -h 127.0.0.1 -p 15432 -U narralytica; then
+              echo "Postgres ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Postgres not ready in time" >&2
+          exit 1
+
+      - name: Debug env (sanity)
+        run: |
+          echo "S3_ENDPOINT=$S3_ENDPOINT"
+          echo "UPLOADS_BUCKET=$UPLOADS_BUCKET"
+          curl -fsS http://127.0.0.1:19000/minio/health/ready >/dev/null && echo "MinIO OK"
+
+      - name: Create MinIO buckets
+        run: |
+          uv run python - <<'PY'
+          import boto3
+          from botocore.config import Config
+          import os
+
+          s3 = boto3.client(
+              "s3",
+              endpoint_url=os.environ["S3_ENDPOINT"],
+              aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+              aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+              region_name=os.environ["AWS_DEFAULT_REGION"],
+              config=Config(s3={"addressing_style": "path"}),
+          )
+
+          for b in ["uploads", "audio-tracks", "transcripts"]:
+              try:
+                  s3.create_bucket(Bucket=b)
+              except Exception:
+                  pass
+
+          print("Buckets ok")
+          PY
+
+      - name: Integration tests (MinIO/S3)
+        run: |
+          uv run --project services/api pytest -q -m "ingest_integration or transcribe_integration"
