@@ -10,6 +10,7 @@ from uuid import uuid4
 from asr.errors import AsrError
 from asr.registry import get_provider
 from audio_fetch import fetch_audio_to_tmp, resolve_audio_ref
+from lang import detect_language, extract_language_hint, normalize_language
 from packages.shared.storage.s3_client import S3ObjectStorageClient
 from segmenter.timecodes import normalize_segments
 
@@ -108,6 +109,32 @@ def _run_asr(job: dict[str, Any]) -> None:
     provider = get_provider()
     res = provider.transcribe(audio_path=audio_path)
 
+    # Language resolution (deterministic): provider > hint > detection
+    language_hint = extract_language_hint(payload)
+    provider_lang = normalize_language(res.language)
+    if provider_lang:
+        language_final = provider_lang
+        language_source = "provider"
+    elif language_hint:
+        language_final = language_hint
+        language_source = "hint"
+    else:
+        language_final = detect_language(res.text)
+        language_source = "detected"
+
+    logger.info(
+        "language_resolved",
+        extra={
+            "job_id": job_id,
+            "video_id": video_id,
+            "provider": provider.name,
+            "language": language_final,
+            "language_source": language_source,
+            "language_hint": language_hint,
+            "provider_language": res.language,
+        },
+    )
+
     transcript_id = str(uuid4())
 
     transcript_payload: dict[str, Any] = {
@@ -116,7 +143,7 @@ def _run_asr(job: dict[str, Any]) -> None:
         "artifact_version": TRANSCRIPT_ARTIFACT_VERSION,
         "video_id": video_id,
         "provider": provider.name,
-        "language": res.language,
+        "language": language_final,
         "text": res.text,
         "segments": normalize_segments(
             [
@@ -149,7 +176,7 @@ def _run_asr(job: dict[str, Any]) -> None:
         transcript_id=transcript_id,
         video_id=video_id,
         provider=provider.name,
-        language=res.language,
+        language=language_final,
         duration_seconds=duration_seconds,
         status="completed",
         metadata=transcript_payload,
@@ -167,7 +194,7 @@ def _run_asr(job: dict[str, Any]) -> None:
             "job_id": job_id,
             "video_id": video_id,
             "provider": provider.name,
-            "language": res.language,
+            "language": language_final,
             "text_chars": len(res.text or ""),
             "artifact_bucket": artifact["bucket"],
             "artifact_key": artifact["key"],
