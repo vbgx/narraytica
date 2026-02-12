@@ -85,7 +85,7 @@ jobs:
       ENV: test
       OPENSEARCH_URL: http://127.0.0.1:9200
       OPENSEARCH_USERNAME: admin
-      OPENSEARCH_PASSWORD: admin
+      OPENSEARCH_PASSWORD: LocalDevOnly_ChangeMe_123!
 
     services:
       opensearch:
@@ -96,6 +96,7 @@ jobs:
           discovery.type: single-node
           plugins.security.disabled: "true"
           OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+          OPENSEARCH_INITIAL_ADMIN_PASSWORD: "LocalDevOnly_ChangeMe_123!"
         options: >-
           --health-cmd="curl -fs http://localhost:9200/_cluster/health || exit 1"
           --health-interval=10s
