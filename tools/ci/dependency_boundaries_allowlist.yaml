@@ -1,0 +1,24 @@
+# Allowlist entries are TEMPORARY and MUST be timeboxed.
+# CI FAILS if an allowlist entry is expired.
+#
+# Format:
+# - rule_id: R3_WORKERS_NO_LOCAL_CLIENTS
+#   file: "path/or/glob"
+#   import: "module or module.*"
+#   reason: "why this exception exists"
+#   expires_on: "YYYY-MM-DD"
+#   owner: "optional"
+
+- rule_id: R3_WORKERS_NO_LOCAL_CLIENTS
+  file: "services/workers/ingest/src/db/postgres.py"
+  import: "psycopg"
+  reason: "Legacy worker DB access; will be replaced by packages/persistence repos in Phase 4."
+  expires_on: "2026-03-01"
+  owner: "victor"
+
+- rule_id: R3_WORKERS_NO_LOCAL_CLIENTS
+  file: "services/workers/transcribe/src/db/postgres.py"
+  import: "psycopg"
+  reason: "Legacy worker DB access; will be replaced by packages/persistence repos in Phase 4."
+  expires_on: "2026-03-01"
+  owner: "victor"
