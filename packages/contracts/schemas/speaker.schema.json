@@ -1,1 +1,17 @@
-# TODO: stub (generated template) — fill when implementing
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/speaker.schema.json",
+  "title": "Speaker",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["speaker_id", "video_id", "created_at"],
+  "properties": {
+    "speaker_id": { "type": "string", "minLength": 1 },
+    "video_id": { "type": "string", "minLength": 1 },
+    "label": { "type": ["string", "null"] },
+    "name": { "type": ["string", "null"] },
+    "language": { "type": ["string", "null"] },
+    "metadata": { "type": ["object", "null"], "additionalProperties": true },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}
