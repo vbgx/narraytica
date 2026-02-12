@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Resolve repo root assuming this file is: services/api/src/config.py
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
@@ -11,6 +16,9 @@ class Settings(BaseSettings):
 
     # API DB
     api_database_url: str | None = Field(default=None, alias="API_DATABASE_URL")
+
+    # API auth (EPIC-05)
+    api_key_pepper: str | None = Field(default=None, alias="API_KEY_PEPPER")
 
     # Postgres (components)
     postgres_host: str = Field(default="127.0.0.1", alias="POSTGRES_HOST")
@@ -38,7 +46,7 @@ class Settings(BaseSettings):
     service_name: str = Field(default="narralytica-api", alias="OTEL_SERVICE_NAME")
 
     model_config = SettingsConfigDict(
-        env_file=(".env.local", ".env"),
+        env_file=(REPO_ROOT / ".env.local", REPO_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

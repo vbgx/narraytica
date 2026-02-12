@@ -42,3 +42,18 @@ jobs = Table(
         "updated_at", DateTime(timezone=True), server_default=func.now(), nullable=False
     ),
 )
+
+# API keys (EPIC-05)
+api_keys = Table(
+    "api_keys",
+    metadata,
+    Column("id", String, primary_key=True),
+    Column("name", String, nullable=False),
+    Column("key_hash", String, nullable=False, unique=True),
+    Column("status", String, nullable=False),  # active/revoked
+    Column("scopes", JSON, nullable=True),  # optional v1
+    Column(
+        "created_at", DateTime(timezone=True), server_default=func.now(), nullable=False
+    ),
+    Column("last_used_at", DateTime(timezone=True), nullable=True),
+)
