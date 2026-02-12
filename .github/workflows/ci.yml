@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # -----------------------
+      # Node / pnpm
+      # -----------------------
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
@@ -25,12 +28,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          # NOTE: cache désactivé (GH cache 400). On le remettra quand tout passe.
-          # cache: "pnpm"
+          # cache: "pnpm"  # à réactiver quand GH cache est stable
 
       - name: Install Node deps
         run: pnpm install --frozen-lockfile
 
+      # -----------------------
+      # Python / uv
+      # -----------------------
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -47,6 +52,14 @@ jobs:
       - name: Install Python deps (services/api)
         run: uv sync --project services/api --frozen --group dev
 
+      # jsonschema est requis par tests/contract (sinon import error)
+      # Idéalement: déplacer dans pyproject.toml (group dev) et supprimer ce step.
+      - name: Ensure contract test deps
+        run: uv pip install jsonschema
+
+      # -----------------------
+      # Lint
+      # -----------------------
       - name: Lint (Node)
         run: pnpm -r lint
 
@@ -56,10 +69,21 @@ jobs:
       - name: Format check (Python)
         run: uv run ruff format --check .
 
-      # IMPORTANT: pas d'intégration ici (MinIO/S3)
-      - name: Tests (Python - non-integration)
-        run: uv run pytest -q -m "not ingest_integration and not transcribe_integration"
+      # -----------------------
+      # Tests (non-integration)
+      # IMPORTANT: on ignore les dossiers d’intégration pour éviter l’import des conftest.py
+      # (pytest collecte/import avant le filtrage -m)
+      # -----------------------
+      - name: Tests (Python - unit/contract only)
+        run: |
+          uv run pytest -q \
+            --ignore=services/workers/ingest/tests/integration \
+            --ignore=services/workers/transcribe/tests/integration \
+            --ignore=services/workers/transcription/tests/integration
 
+      # -----------------------
+      # Build
+      # -----------------------
       - name: Build (Node)
         run: pnpm -r build
 
@@ -106,6 +130,11 @@ jobs:
       - name: Install Python deps (services/api)
         run: uv sync --project services/api --frozen --group dev
 
+      # deps nécessaires aux intégrations (imports dans conftest / clients)
+      # Idéalement: mettre dans pyproject.toml (group integration) et faire uv sync --group integration
+      - name: Ensure integration deps
+        run: uv pip install boto3 psycopg[binary] jsonschema
+
       - name: Wait for MinIO ready
         run: |
           for i in $(seq 1 90); do
@@ -149,15 +178,17 @@ jobs:
         env:
           ENV: test
 
-          # ✅ ce que tes tests utilisent (vu dans la trace: 19000)
+          # Standard S3 schema (aligné .env.local / .env.example)
           S3_ENDPOINT: http://127.0.0.1:19000
           S3_ACCESS_KEY: minioadmin
           S3_SECRET_KEY: minioadmin
-          UPLOADS_BUCKET: uploads
-          AUDIO_BUCKET: audio-tracks
-          TRANSCRIPTS_BUCKET: transcripts
+          S3_REGION: us-east-1
 
-          # ✅ en bonus (au cas où certaines libs lisent AWS_*)
+          S3_BUCKET_UPLOADS: uploads
+          S3_BUCKET_AUDIO: audio-tracks
+          S3_BUCKET_TRANSCRIPTS: transcripts
+
+          # boto3 hygiene
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
           AWS_DEFAULT_REGION: us-east-1
