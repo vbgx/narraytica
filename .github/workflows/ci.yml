@@ -93,11 +93,12 @@ jobs:
         ports:
           - 9200:9200
         env:
-          discovery.type: single-node
-          plugins.security.disabled: "true"
           OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
           OPENSEARCH_INITIAL_ADMIN_PASSWORD: "LocalDevOnly_ChangeMe_123!"
+          DISABLE_INSTALL_DEMO_CONFIG: "true"
+          DISABLE_SECURITY_PLUGIN: "true"
         options: >-
+          -e discovery.type=single-node
           --health-cmd="curl -fs http://localhost:9200/_cluster/health || exit 1"
           --health-interval=10s
           --health-timeout=5s
