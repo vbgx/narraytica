@@ -11,18 +11,17 @@ from asr.errors import AsrError
 from asr.registry import get_provider
 from asr.runner import transcribe_with_timeout
 from audio_fetch import fetch_audio_to_tmp, resolve_audio_ref
-from lang import detect_language, extract_language_hint, normalize_language
-from obs import emit_job_event, span
-from packages.shared.storage.s3_client import S3ObjectStorageClient
-from retry import RetryConfig, run_with_retry
-from segmenter.timecodes import normalize_segments
-
 from db.jobs import (
     claim_next_transcription_job,
     mark_job_failed,
     mark_job_succeeded,
 )
 from db.transcripts import insert_transcript
+from lang import detect_language, extract_language_hint, normalize_language
+from obs import emit_job_event, span
+from packages.shared.storage.s3_client import S3ObjectStorageClient
+from retry import RetryConfig, run_with_retry
+from segmenter.timecodes import normalize_segments
 
 logger = logging.getLogger("transcribe-worker")
 

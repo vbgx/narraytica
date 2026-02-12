@@ -4,6 +4,8 @@ import tempfile
 import time
 from typing import Any
 
+from db.jobs import create_or_get_transcription_job
+from db.videos import persist_video_metadata
 from domain.job_status import JobStatus
 from media.audio import extract_audio_wav_16k_mono
 from metadata.ffprobe import probe_media
@@ -12,9 +14,6 @@ from packages.shared.storage.s3_client import S3ObjectStorageClient
 from telemetry.ingest import JobCtx, emit_metric, log_error, log_event, timed_phase
 from upload.handler import migrate_upload_to_canonical
 from youtube.downloader import download_youtube_video
-
-from db.jobs import create_or_get_transcription_job
-from db.videos import persist_video_metadata
 
 logger = logging.getLogger("ingest-worker")
 
