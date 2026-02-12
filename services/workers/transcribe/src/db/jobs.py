@@ -80,9 +80,9 @@ def claim_next_transcription_job() -> dict[str, Any] | None:
         "video_id": video_id,
         "type": job_type,
         "status": status,
-        "payload": payload
-        if isinstance(payload, dict)
-        else json.loads(payload or "{}"),
+        "payload": (
+            payload if isinstance(payload, dict) else json.loads(payload or "{}")
+        ),
     }
     logger.info("job_claimed", extra={"job_id": job_id, "video_id": video_id})
     return job

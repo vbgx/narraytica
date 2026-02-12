@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import importlib
 import os
-import uuid
 from typing import Any
 
 import httpx
 from fastapi.testclient import TestClient
 
-OS_URL = os.environ.get("OPENSEARCH_URL", "http://127.0.0.1:9200")
-QDRANT_URL = os.environ.get("QDRANT_URL", "http://127.0.0.1:6333")
-
-INDEX = "narralytica-segments-v1"
-COLLECTION = "narralytica-segments-v1"
+OS_URL = os.environ.get("OPENSEARCH_URL", "http://127.0.0.1:9200").rstrip("/")
+INDEX = os.environ.get("OPENSEARCH_SEGMENTS_INDEX", "narralytica-segments-v1").strip()
 
 VID = "video_01"
 SID1 = "seg_01"
@@ -24,86 +20,75 @@ def seed_opensearch(
     created_at_1: str = "2026-01-01T00:00:00Z",
     created_at_2: str = "2026-01-02T00:00:00Z",
 ):
+    """
+    Seed OpenSearch with segments that are valid for the /search response contract.
+
+    Required by API mapping:
+    - video_id
+    - start_ms
+    - end_ms
+    - text
+    """
     c = httpx.Client(timeout=10)
 
-    # Create index if needed
-    c.put(
+    # (Re)create index with minimal mapping needed by the API.
+    # Delete is best-effort: index may not exist.
+    c.delete(f"{OS_URL}/{INDEX}")
+
+    r = c.put(
         f"{OS_URL}/{INDEX}",
         json={
             "settings": {"number_of_shards": 1, "number_of_replicas": 0},
             "mappings": {
                 "properties": {
-                    "segment_id": {"type": "keyword"},
                     "video_id": {"type": "keyword"},
+                    "transcript_id": {"type": "keyword"},
+                    "speaker_id": {"type": "keyword"},
+                    "segment_index": {"type": "integer"},
+                    "start_ms": {"type": "integer"},
+                    "end_ms": {"type": "integer"},
                     "text": {"type": "text"},
                     "language": {"type": "keyword"},
                     "source": {"type": "keyword"},
                     "created_at": {"type": "date"},
+                    "updated_at": {"type": "date"},
                 }
             },
         },
     )
+    # 200 OK if created, 400 if already exists (but we deleted), keep strict
+    r.raise_for_status()
 
-    # Index docs
+    # Index docs (IDs are segment IDs, as used by the API)
     c.post(
         f"{OS_URL}/{INDEX}/_doc/{SID1}",
         json={
-            "segment_id": SID1,
             "video_id": VID,
+            "start_ms": 0,
+            "end_ms": 1000,
             "text": "hello world",
             "language": "en",
             "source": "whisper",
             "created_at": created_at_1,
+            "updated_at": created_at_1,
         },
     ).raise_for_status()
 
     c.post(
         f"{OS_URL}/{INDEX}/_doc/{SID2}",
         json={
-            "segment_id": SID2,
             "video_id": VID,
+            "start_ms": 1000,
+            "end_ms": 2000,
             "text": "bonjour le monde",
             "language": "fr",
             "source": "whisper",
             "created_at": created_at_2,
+            "updated_at": created_at_2,
         },
     ).raise_for_status()
 
     c.post(f"{OS_URL}/{INDEX}/_refresh").raise_for_status()
-
-
-def seed_qdrant():
-    c = httpx.Client(timeout=10)
-
-    # Create collection (409 if exists is OK)
-    r = c.put(
-        f"{QDRANT_URL}/collections/{COLLECTION}",
-        json={"vectors": {"size": 1024, "distance": "Cosine"}},
-        timeout=10,
-    )
-    if r.status_code not in (200, 201, 409):
-        r.raise_for_status()
-
-    # Qdrant point IDs must be UUID or unsigned int.
-    # Use stable UUIDv5 derived from segment_id.
-    points = [
-        {
-            "id": str(uuid.uuid5(uuid.NAMESPACE_URL, SID1)),
-            "vector": [0.0] * 1024,
-            "payload": {"segment_id": SID1},
-        },
-        {
-            "id": str(uuid.uuid5(uuid.NAMESPACE_URL, SID2)),
-            "vector": [0.0] * 1024,
-            "payload": {"segment_id": SID2},
-        },
-    ]
-
-    c.put(
-        f"{QDRANT_URL}/collections/{COLLECTION}/points?wait=true",
-        json={"points": points},
-        timeout=10,
-    ).raise_for_status()
 
 
 def client():
@@ -125,33 +110,31 @@ def client():
 
     app.dependency_overrides[auth_deps.require_api_key] = _fake_require_api_key
 
-    return TestClient(app)
+    return TestClient(app, raise_server_exceptions=True)
 
 
 def test_keyword_hit():
     seed_opensearch()
-    seed_qdrant()
 
     c = client()
-    r = c.post("/api/v1/search", json={"query": "hello", "semantic": False})
+    r = c.post("/api/v1/search", json={"query": "hello", "mode": "lexical"})
+    assert r.status_code == 200, r.text
 
-    assert r.status_code == 200
-    ids = [i["segment_id"] for i in r.json()["items"]]
+    ids = [i["segment"]["id"] for i in r.json()["items"]]
     assert SID1 in ids
 
 
 def test_filter_language():
     seed_opensearch()
-    seed_qdrant()
 
     c = client()
     r = c.post(
         "/api/v1/search",
-        json={"query": "", "filters": {"language": "fr"}, "semantic": False},
+        json={"query": "", "filters": {"language": "fr"}, "mode": "lexical"},
     )
+    assert r.status_code == 200, r.text
 
-    assert r.status_code == 200
-    ids = [i["segment_id"] for i in r.json()["items"]]
+    ids = [i["segment"]["id"] for i in r.json()["items"]]
     assert SID2 in ids
     assert SID1 not in ids
 
@@ -161,7 +144,6 @@ def test_filter_date_narrows():
         created_at_1="2026-01-01T00:00:00Z",
         created_at_2="2026-01-10T00:00:00Z",
     )
-    seed_qdrant()
 
     c = client()
     r = c.post(
@@ -169,19 +151,18 @@ def test_filter_date_narrows():
         json={
             "query": "",
             "filters": {"date_from": "2026-01-05T00:00:00Z"},
-            "semantic": False,
+            "mode": "lexical",
         },
     )
+    assert r.status_code == 200, r.text
 
-    assert r.status_code == 200
-    ids = [i["segment_id"] for i in r.json()["items"]]
+    ids = [i["segment"]["id"] for i in r.json()["items"]]
     assert SID2 in ids
     assert SID1 not in ids
 
 
 def test_merge_no_duplicates(monkeypatch):
     seed_opensearch()
-    seed_qdrant()
 
     c = client()
 
@@ -197,17 +178,16 @@ def test_merge_no_duplicates(monkeypatch):
 
     monkeypatch.setattr(search_routes, "vector_search", fake_vector_search)
 
-    r = c.post("/api/v1/search", json={"query": "hello", "semantic": True})
+    r = c.post("/api/v1/search", json={"query": "hello", "mode": "hybrid"})
+    assert r.status_code == 200, r.text
 
-    assert r.status_code == 200
-    ids = [i["segment_id"] for i in r.json()["items"]]
+    ids = [i["segment"]["id"] for i in r.json()["items"]]
     assert len(ids) == len(set(ids))
 
 
-def test_vector_search_no_crash():
+def test_vector_disabled_no_crash():
     seed_opensearch()
-    seed_qdrant()
 
     c = client()
-    r = c.post("/api/v1/search", json={"query": "hello", "semantic": False})
-    assert r.status_code == 200
+    r = c.post("/api/v1/search", json={"query": "hello", "mode": "lexical"})
+    assert r.status_code == 200, r.text

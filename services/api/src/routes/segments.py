@@ -37,17 +37,19 @@ def _to_segment_response(s: SegmentV1) -> SegmentResponse:
         start_ms=s.start_ms,
         end_ms=s.end_ms,
         text=s.text,
-        words=[
-            {
-                "start_ms": w.start_ms,
-                "end_ms": w.end_ms,
-                "text": w.text,
-                "confidence": w.confidence,
-            }
-            for w in (s.words or [])
-        ]
-        if s.words
-        else None,
+        words=(
+            [
+                {
+                    "start_ms": w.start_ms,
+                    "end_ms": w.end_ms,
+                    "text": w.text,
+                    "confidence": w.confidence,
+                }
+                for w in (s.words or [])
+            ]
+            if s.words
+            else None
+        ),
     )
 
 
