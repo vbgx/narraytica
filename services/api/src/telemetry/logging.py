@@ -46,3 +46,7 @@ def log_extra(
     logger: logging.Logger, extra: Mapping[str, Any]
 ) -> logging.LoggerAdapter:
     return logging.LoggerAdapter(logger, dict(extra))
+
+
+def get_logger(name: str) -> logging.Logger:
+    return logging.getLogger(name)
