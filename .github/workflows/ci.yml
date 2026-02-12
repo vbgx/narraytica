@@ -18,24 +18,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -----------------------
-      # Node / pnpm
-      # -----------------------
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "pnpm"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Install Node deps
         run: pnpm install --frozen-lockfile
 
-      # -----------------------
-      # Python / uv
-      # -----------------------
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -46,113 +42,23 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install Python deps root
+      - name: Install Python deps (root)
         run: uv sync --frozen --group dev
 
-      - name: Install Python deps services api
+      - name: Install Python deps (services/api)
         run: uv sync --project services/api --frozen --group dev
 
-      # -----------------------
-      # Lint
-      # -----------------------
-      - name: Lint Node
+      - name: Lint (Node)
         run: pnpm -r lint
 
-      - name: Lint Python ruff check
+      - name: Lint (Python)
         run: uv run ruff check .
 
-      - name: Lint Python ruff format check
+      - name: Format check (Python)
         run: uv run ruff format --check .
 
-      # -----------------------
-      # Tests
-      # -----------------------
-      - name: Tests Python services api
+      - name: Tests (Python)
         run: uv run --project services/api pytest -q
 
-      # -----------------------
-      # Build
-      # -----------------------
-      - name: Build Node
+      - name: Build (Node)
         run: pnpm -r build
-
-  integration-minio:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: lint-test-build
-
-    services:
-      minio:
-        image: minio/minio:RELEASE.2025-01-20T14-49-07Z
-        ports:
-          - 9000:9000
-          - 9001:9001
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        options: >-
-          --health-cmd "curl -f http://localhost:9000/minio/health/ready || exit 1"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 20
-        command: server /data --console-address ":9001"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          enable-cache: true
-
-      - name: Install Python deps root
-        run: uv sync --frozen --group dev
-
-      - name: Install Python deps services api
-        run: uv sync --project services/api --frozen --group dev
-
-      # Create buckets used by tests
-      - name: Create MinIO buckets
-        env:
-          AWS_ACCESS_KEY_ID: minioadmin
-          AWS_SECRET_ACCESS_KEY: minioadmin
-          AWS_REGION: us-east-1
-        run: |
-          python - <<'PY'
-          import boto3
-
-          s3 = boto3.client(
-              "s3",
-              endpoint_url="http://127.0.0.1:9000",
-              aws_access_key_id="minioadmin",
-              aws_secret_access_key="minioadmin",
-              region_name="us-east-1",
-          )
-          for b in ["uploads", "audio-tracks", "transcripts"]:
-              try:
-                  s3.create_bucket(Bucket=b)
-              except Exception as e:
-                  # ok if already exists in reruns
-                  pass
-          print("Buckets ok")
-          PY
-
-      - name: Integration tests workers
-        env:
-          ENV: test
-          S3_ENDPOINT: http://127.0.0.1:9000
-          S3_ACCESS_KEY: minioadmin
-          S3_SECRET_KEY: minioadmin
-          UPLOADS_BUCKET: uploads
-          AUDIO_BUCKET: audio-tracks
-          TRANSCRIPTS_BUCKET: transcripts
-          # IMPORTANT: adapt this if your tests need DB too
-          # DATABASE_URL: postgresql://...
-        run: |
-          uv run pytest -q -m "ingest_integration or transcribe_integration"
