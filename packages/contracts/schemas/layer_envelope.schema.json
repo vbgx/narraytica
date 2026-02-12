@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.dev/schemas/layer_envelope.schema.json",
+  "title": "Layer Envelope",
+  "type": "object",
+  "required": ["layer", "layer_version", "payload"],
+  "additionalProperties": true,
+  "properties": {
+    "layer": { "type": "string", "minLength": 1 },
+    "layer_version": { "type": "integer", "minimum": 1 },
+    "payload": {}
+  }
+}

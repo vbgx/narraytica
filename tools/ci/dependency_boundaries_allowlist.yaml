@@ -7,6 +7,7 @@
 #   import: "module or module.*"
 #   reason: "why this exception exists"
 #   expires_on: "YYYY-MM-DD"
+#   drift_map: "EXC-xxx"
 #   owner: "optional"
 
 - rule_id: R3_WORKERS_NO_LOCAL_CLIENTS
@@ -14,6 +15,7 @@
   import: "psycopg"
   reason: "Legacy worker DB access; will be replaced by packages/persistence repos in Phase 4."
   expires_on: "2026-03-01"
+  drift_map: "EXC-001"
   owner: "victor"
 
 - rule_id: R3_WORKERS_NO_LOCAL_CLIENTS
@@ -21,4 +23,5 @@
   import: "psycopg"
   reason: "Legacy worker DB access; will be replaced by packages/persistence repos in Phase 4."
   expires_on: "2026-03-01"
+  drift_map: "EXC-002"
   owner: "victor"

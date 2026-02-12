@@ -1,11 +1,18 @@
 {
-  "video_id": "vid_01",
-  "layer": "topics",
-  "model": { "name": "gpt-4o-mini", "version": "2026-01-01" },
   "created_at": "2026-01-01T00:00:00Z",
+  "layer": "topics",
+  "layer_version": 1,
+  "model": {
+    "name": "gpt-4o-mini",
+    "version": "2026-01-01"
+  },
   "payload": {
     "topics": [
-      { "label": "AI", "score": 0.9 }
+      {
+        "label": "AI",
+        "score": 0.9
+      }
     ]
-  }
+  },
+  "video_id": "vid_01"
 }
