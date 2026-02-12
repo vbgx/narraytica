@@ -69,7 +69,9 @@ jobs:
 
       - name: Tests (Python - services/api)
         run: |
-          uv run --project services/api pytest -q -m "opensearch_integration"
+          uv run --project services/api pytest -q services/api/tests \
+            --ignore=services/api/tests/integration \
+            -m "not ingest_integration and not transcribe_integration"
 
       - name: Build (Node)
         run: pnpm -r build
@@ -128,7 +130,7 @@ jobs:
 
       - name: Integration tests (OpenSearch)
         run: |
-          uv run --project services/api pytest -q -c services/api/pytest.ini -m "opensearch_integration"
+          uv run --project services/api pytest -q -m "opensearch_integration"
 
   integration-minio:
     runs-on: ubuntu-latest
@@ -271,4 +273,4 @@ jobs:
 
       - name: Integration tests (MinIO/S3)
         run: |
-          uv run --project services/api pytest -q -c services/api/pytest.ini -m "ingest_integration or transcribe_integration"
+          uv run --project services/api pytest -q -m "ingest_integration or transcribe_integration"
