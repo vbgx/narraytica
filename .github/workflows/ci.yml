@@ -66,8 +66,8 @@ jobs:
             --ignore=services/workers/transcription/tests/integration
 
       - name: Tests (Python - services/api)
-        run: |
-          uv run --project services/api pytest -q
+  run: |
+    uv run --project services/api pytest -q services/api/tests
 
       - name: Build (Node)
         run: pnpm -r build
