@@ -18,11 +18,12 @@ def create_app() -> FastAPI:
         path_prefix=settings.rate_limit_path_prefix,
     )
 
-    from .routes import ingest, search, videos
+    from .routes import ingest, search, transcripts, videos
 
     app.include_router(ingest.router, prefix="/api/v1")
     app.include_router(search.router, prefix="/api/v1")
     app.include_router(videos.router, prefix="/api/v1")
+    app.include_router(transcripts.router, prefix="/api/v1")
 
     return app
 
