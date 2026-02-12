@@ -26,11 +26,17 @@ def insert_transcript(
     is_latest: bool = True,
 ) -> None:
     """
-    Insert a transcript row.
+    Insert a transcript row (idempotent).
 
-    V0 worker writes the raw transcript payload into:
-      - metadata (text/segments/asr/audio_ref)
-      - optional artifact_* pointers if an artifact JSON was uploaded to object storage
+    Uniqueness / reruns:
+      - DB has a UNIQUE index on (video_id, artifact_key, version)
+        with a predicate: WHERE artifact_key IS NOT NULL
+      - Therefore our UPSERT MUST match that exact constraint, including the WHERE.
+
+    V0 worker writes:
+      - metadata (text/segments/asr/audio_ref, etc.)
+      - optional artifact_* pointers (object storage)
+      - storage_ref (canonical reference to artifact in object storage)
     """
     sql = """
     INSERT INTO public.transcripts (
@@ -74,6 +80,7 @@ def insert_transcript(
       now()
     )
     ON CONFLICT (video_id, artifact_key, version)
+    WHERE artifact_key IS NOT NULL
     DO UPDATE SET
       tenant_id = EXCLUDED.tenant_id,
       provider = EXCLUDED.provider,
@@ -81,6 +88,7 @@ def insert_transcript(
       duration_seconds = EXCLUDED.duration_seconds,
       status = EXCLUDED.status,
       artifact_bucket = EXCLUDED.artifact_bucket,
+      artifact_key = EXCLUDED.artifact_key,
       artifact_format = EXCLUDED.artifact_format,
       artifact_bytes = EXCLUDED.artifact_bytes,
       artifact_sha256 = EXCLUDED.artifact_sha256,

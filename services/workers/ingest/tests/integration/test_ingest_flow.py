@@ -55,7 +55,7 @@ def db_fetch_one(database_url: str, sql: str, params: dict[str, Any]):
             return cur.fetchone()
 
 
-@pytest.mark.integration
+@pytest.mark.ingest_integration
 def test_ingestion_upload_end_to_end(storage, database_url, test_ids, temp_mp4):
     repo_root = os.getcwd()
     _ensure_sys_path(repo_root)
@@ -128,7 +128,7 @@ def test_ingestion_upload_end_to_end(storage, database_url, test_ids, temp_mp4):
     assert isinstance(meta, dict)
 
 
-@pytest.mark.integration
+@pytest.mark.ingest_integration
 def test_ingestion_idempotent_upsert(storage, database_url, test_ids, temp_mp4):
     repo_root = os.getcwd()
     _ensure_sys_path(repo_root)
