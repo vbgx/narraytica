@@ -12,6 +12,7 @@ def insert_transcript(
     video_id: str,
     provider: str | None = None,
     language: str | None = None,
+    duration_seconds: float | None = None,
     status: str = "completed",
     metadata: dict[str, Any] | None = None,
     tenant_id: str | None = None,
@@ -38,6 +39,7 @@ def insert_transcript(
       video_id,
       provider,
       language,
+      duration_seconds,
       status,
       artifact_bucket,
       artifact_key,
@@ -57,6 +59,7 @@ def insert_transcript(
       %(video_id)s,
       %(provider)s,
       %(language)s,
+      %(duration_seconds)s,
       %(status)s,
       %(artifact_bucket)s,
       %(artifact_key)s,
@@ -69,7 +72,22 @@ def insert_transcript(
       %(storage_ref)s::jsonb,
       now(),
       now()
-    );
+    )
+    ON CONFLICT (video_id, artifact_key, version)
+    DO UPDATE SET
+      tenant_id = EXCLUDED.tenant_id,
+      provider = EXCLUDED.provider,
+      language = EXCLUDED.language,
+      duration_seconds = EXCLUDED.duration_seconds,
+      status = EXCLUDED.status,
+      artifact_bucket = EXCLUDED.artifact_bucket,
+      artifact_format = EXCLUDED.artifact_format,
+      artifact_bytes = EXCLUDED.artifact_bytes,
+      artifact_sha256 = EXCLUDED.artifact_sha256,
+      is_latest = EXCLUDED.is_latest,
+      metadata = EXCLUDED.metadata,
+      storage_ref = EXCLUDED.storage_ref,
+      updated_at = now();
     """
 
     params = {
@@ -78,6 +96,7 @@ def insert_transcript(
         "video_id": video_id,
         "provider": provider,
         "language": language,
+        "duration_seconds": duration_seconds,
         "status": status,
         "artifact_bucket": artifact_bucket,
         "artifact_key": artifact_key,

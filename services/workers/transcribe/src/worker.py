@@ -128,6 +128,11 @@ def _run_asr(job: dict[str, Any]) -> None:
         "audio_ref": {"bucket": bucket, "key": key},
     }
 
+    # Derive duration from canonical segments (ms -> seconds)
+    _segs = transcript_payload.get("segments") or []
+    _duration_ms = int(_segs[-1].get("end_ms", 0)) if _segs else 0
+    duration_seconds = _duration_ms / 1000.0
+
     artifact = _upload_transcript_artifact(
         video_id=video_id,
         job_id=job_id,
@@ -145,6 +150,7 @@ def _run_asr(job: dict[str, Any]) -> None:
         video_id=video_id,
         provider=provider.name,
         language=res.language,
+        duration_seconds=duration_seconds,
         status="completed",
         metadata=transcript_payload,
         artifact_bucket=artifact["bucket"],
