@@ -1,1 +1,15 @@
-# TODO: stub (generated template) — fill when implementing
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VideoV1",
+  "type": "object",
+  "required": ["video_id", "status", "created_at"],
+  "properties": {
+    "video_id": { "type": "string" },
+    "status": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source": { "type": ["object", "null"], "additionalProperties": true },
+    "artifacts": { "type": ["object", "null"], "additionalProperties": true },
+    "metadata": { "type": ["object", "null"], "additionalProperties": true }
+  },
+  "additionalProperties": false
+}
