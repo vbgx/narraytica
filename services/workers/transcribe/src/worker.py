@@ -1,100 +1,191 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
-import time
+from typing import Any
+from uuid import uuid4
 
-from db.jobs import claim_next_transcription_job, mark_job_failed, mark_job_succeeded
-from db.transcripts import create_mock_transcript
+from asr.errors import AsrError
+from asr.registry import get_provider
+from audio_fetch import fetch_audio_to_tmp, resolve_audio_ref
+from packages.shared.storage.s3_client import S3ObjectStorageClient
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-POLL_INTERVAL_MS = int(os.getenv("JOB_POLL_INTERVAL_MS", "1000"))
-SLEEP_ON_EMPTY_MS = int(os.getenv("JOB_EMPTY_SLEEP_MS", str(POLL_INTERVAL_MS)))
-EXECUTION_MODE = os.getenv("TRANSCRIBE_MODE", "mock")  # mock|real (future)
-
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+from db.jobs import (
+    claim_next_transcription_job,
+    mark_job_failed,
+    mark_job_succeeded,
 )
+from db.transcripts import insert_transcript
+
 logger = logging.getLogger("transcribe-worker")
 
 
-def execute_transcription(job: dict) -> None:
-    """
-    v0 skeleton:
-      - mock: write a 'completed' transcript row
-      - future: download audio, run ASR provider,
-        store artifact, write transcript rows
-    """
-    job_id = job["id"]
-    video_id = job["video_id"]
+def _s3_client() -> S3ObjectStorageClient:
+    endpoint = os.getenv("S3_ENDPOINT")
+    access_key = os.getenv("S3_ACCESS_KEY")
+    secret_key = os.getenv("S3_SECRET_KEY")
 
-    if EXECUTION_MODE != "mock":
-        raise NotImplementedError("TRANSCRIBE_MODE=real is not implemented yet")
+    if not (endpoint and access_key and secret_key):
+        raise RuntimeError(
+            "S3 creds missing: S3_ENDPOINT/S3_ACCESS_KEY/S3_SECRET_KEY must be set"
+        )
 
-    transcript_id = create_mock_transcript(
+    return S3ObjectStorageClient(
+        endpoint_url=endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+    )
+
+
+def _upload_transcript_artifact(
+    *,
+    video_id: str,
+    transcript_id: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Store transcript payload as JSON artifact in object storage.
+
+    Returns:
+      {bucket, key, size_bytes, sha256}
+    """
+    storage = _s3_client()
+
+    bucket = os.getenv("TRANSCRIPTS_BUCKET", "transcripts")
+    key = f"transcripts/{video_id}/{transcript_id}.json"
+
+    raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    sha256 = hashlib.sha256(raw).hexdigest()
+
+    storage.upload_bytes(bucket, key, raw, "application/json")
+
+    return {
+        "bucket": bucket,
+        "key": key,
+        "size_bytes": len(raw),
+        "sha256": sha256,
+    }
+
+
+def _build_storage_ref(artifact: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "provider": "minio",
+        "bucket": artifact["bucket"],
+        "key": artifact["key"],
+        "content_type": "application/json",
+        "size_bytes": artifact["size_bytes"],
+        "checksum": f"sha256:{artifact['sha256']}",
+    }
+
+
+def _run_asr(job: dict[str, Any]) -> None:
+    """
+    v0:
+      - fetch audio from object storage (MinIO/S3)
+      - run ASR via pluggable provider
+      - store transcript artifact (json) in object storage
+      - persist transcript row + artifact pointers
+    """
+    job_id = str(job["id"])
+    video_id = str(job["video_id"])
+    payload = job.get("payload") or {}
+
+    bucket, key = resolve_audio_ref(payload)
+    audio_path = fetch_audio_to_tmp(bucket=bucket, key=key)
+
+    provider = get_provider()
+    res = provider.transcribe(audio_path=audio_path)
+
+    transcript_id = str(uuid4())
+
+    transcript_payload: dict[str, Any] = {
+        "video_id": video_id,
+        "provider": provider.name,
+        "language": res.language,
+        "text": res.text,
+        "segments": [s.__dict__ for s in res.segments],
+        "asr": res.raw,
+        "audio_ref": {"bucket": bucket, "key": key},
+    }
+
+    artifact = _upload_transcript_artifact(
         video_id=video_id,
-        metadata={"job_id": job_id, "note": "mock transcription"},
+        transcript_id=transcript_id,
+        payload=transcript_payload,
     )
-    logger.info(
-        "transcription_mock_completed",
-        extra={"job_id": job_id, "video_id": video_id, "transcript_id": transcript_id},
+    storage_ref = _build_storage_ref(artifact)
+
+    insert_transcript(
+        transcript_id=transcript_id,
+        video_id=video_id,
+        provider=provider.name,
+        language=res.language,
+        status="completed",
+        metadata=transcript_payload,
+        artifact_bucket=artifact["bucket"],
+        artifact_key=artifact["key"],
+        artifact_format="json",
+        artifact_bytes=artifact["size_bytes"],
+        artifact_sha256=artifact["sha256"],
+        storage_ref=storage_ref,
     )
 
-
-def run_forever() -> None:
     logger.info(
-        "worker_started",
+        "transcription_completed",
         extra={
-            "poll_interval_ms": POLL_INTERVAL_MS,
-            "mode": EXECUTION_MODE,
+            "job_id": job_id,
+            "video_id": video_id,
+            "provider": provider.name,
+            "language": res.language,
+            "text_chars": len(res.text or ""),
+            "artifact_bucket": artifact["bucket"],
+            "artifact_key": artifact["key"],
         },
     )
 
-    while True:
-        start = time.perf_counter()
-        job = None
-
-        try:
-            job = claim_next_transcription_job()
-            if not job:
-                time.sleep(SLEEP_ON_EMPTY_MS / 1000.0)
-                continue
-
-            job_id = job["id"]
-            video_id = job["video_id"]
-            logger.info("job_running", extra={"job_id": job_id, "video_id": video_id})
-
-            execute_transcription(job)
-            mark_job_succeeded(job_id=job_id)
-
-            elapsed_ms = int((time.perf_counter() - start) * 1000)
-            logger.info(
-                "job_succeeded",
-                extra={
-                    "job_id": job_id,
-                    "video_id": video_id,
-                    "duration_ms": elapsed_ms,
-                },
-            )
-
-        except Exception as e:
-            if job:
-                job_id = job.get("id")
-                video_id = job.get("video_id")
-                mark_job_failed(job_id=job_id, error_message=str(e))
-                logger.exception(
-                    "job_failed",
-                    extra={"job_id": job_id, "video_id": video_id},
-                )
-            else:
-                logger.exception("loop_failed")
-
-            time.sleep(0.2)
-
 
 def main() -> None:
-    run_forever()
+    logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
+    logger.info("worker_started")
+
+    while True:
+        job = claim_next_transcription_job()
+        if not job:
+            return
+
+        job_id = str(job["id"])
+        logger.info(
+            "job_claimed",
+            extra={
+                "job_id": job_id,
+                "job_type": job.get("type"),
+            },
+        )
+
+        try:
+            _run_asr(job)
+            mark_job_succeeded(job_id=job_id)
+            logger.info("job_succeeded", extra={"job_id": job_id})
+        except AsrError as e:
+            mark_job_failed(
+                job_id=job_id,
+                error_message=f"{e.code}: {str(e)}",
+            )
+            logger.exception(
+                "job_failed_asr",
+                extra={
+                    "job_id": job_id,
+                    "code": e.code,
+                },
+            )
+        except Exception as e:
+            mark_job_failed(
+                job_id=job_id,
+                error_message=f"transcribe_unexpected_error: {str(e)}",
+            )
+            logger.exception("job_failed", extra={"job_id": job_id})
 
 
 if __name__ == "__main__":
