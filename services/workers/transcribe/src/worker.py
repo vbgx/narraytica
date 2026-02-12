@@ -22,6 +22,14 @@ from db.transcripts import insert_transcript
 
 logger = logging.getLogger("transcribe-worker")
 
+TRANSCRIPT_ARTIFACT_VERSION = "v1"
+
+
+def _transcript_artifact_key(
+    *, video_id: str, job_id: str, version: str = TRANSCRIPT_ARTIFACT_VERSION
+) -> str:
+    return f"transcripts/{video_id}/{job_id}/transcript.{version}.json"
+
 
 def _s3_client() -> S3ObjectStorageClient:
     endpoint = os.getenv("S3_ENDPOINT")
@@ -43,6 +51,7 @@ def _s3_client() -> S3ObjectStorageClient:
 def _upload_transcript_artifact(
     *,
     video_id: str,
+    job_id: str,
     transcript_id: str,
     payload: dict[str, Any],
 ) -> dict[str, Any]:
@@ -55,7 +64,7 @@ def _upload_transcript_artifact(
     storage = _s3_client()
 
     bucket = os.getenv("TRANSCRIPTS_BUCKET", "transcripts")
-    key = f"transcripts/{video_id}/{transcript_id}.json"
+    key = _transcript_artifact_key(video_id=video_id, job_id=job_id)
 
     raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     sha256 = hashlib.sha256(raw).hexdigest()
@@ -102,6 +111,9 @@ def _run_asr(job: dict[str, Any]) -> None:
     transcript_id = str(uuid4())
 
     transcript_payload: dict[str, Any] = {
+        "transcript_id": transcript_id,
+        "job_id": job_id,
+        "artifact_version": TRANSCRIPT_ARTIFACT_VERSION,
         "video_id": video_id,
         "provider": provider.name,
         "language": res.language,
@@ -118,10 +130,15 @@ def _run_asr(job: dict[str, Any]) -> None:
 
     artifact = _upload_transcript_artifact(
         video_id=video_id,
+        job_id=job_id,
         transcript_id=transcript_id,
         payload=transcript_payload,
     )
     storage_ref = _build_storage_ref(artifact)
+
+    transcript_payload["storage_ref"] = storage_ref
+    # note: artifact JSON includes storage_ref so it is self-describing
+    # and retrievable by ref
 
     insert_transcript(
         transcript_id=transcript_id,

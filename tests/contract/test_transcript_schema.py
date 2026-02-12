@@ -29,6 +29,14 @@ def test_transcript_payload_conforms_to_schema() -> None:
         ],
         "asr": {"opaque": True},
         "audio_ref": {"bucket": "uploads", "key": "audio/vid_123.wav"},
+        "storage_ref": {
+            "provider": "minio",
+            "bucket": "transcripts",
+            "key": "transcripts/vid_123/job_123/transcript.v1.json",
+            "content_type": "application/json",
+            "size_bytes": 123,
+            "checksum": "sha256:" + ("0" * 64),
+        },
     }
 
     # Resolve local relative refs like "segment.schema.json"

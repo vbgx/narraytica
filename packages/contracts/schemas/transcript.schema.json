@@ -4,7 +4,14 @@
   "title": "Transcript",
   "type": "object",
   "additionalProperties": false,
-  "required": ["video_id", "provider", "text", "segments", "audio_ref"],
+  "required": [
+    "video_id",
+    "provider",
+    "text",
+    "segments",
+    "audio_ref",
+    "storage_ref"
+  ],
   "properties": {
     "transcript_id": {
       "type": "string",
@@ -19,7 +26,10 @@
       "minLength": 1
     },
     "language": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "BCP-47-ish language code when known (e.g. en, fr)."
     },
     "text": {
@@ -29,15 +39,26 @@
     "segments": {
       "type": "array",
       "minItems": 0,
-      "items": { "$ref": "segment.schema.json" }
+      "items": {
+        "$ref": "segment.schema.json"
+      }
     },
     "audio_ref": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["bucket", "key"],
+      "required": [
+        "bucket",
+        "key"
+      ],
       "properties": {
-        "bucket": { "type": "string", "minLength": 1 },
-        "key": { "type": "string", "minLength": 1 }
+        "bucket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "storage_ref": {
@@ -45,7 +66,10 @@
       "$ref": "storage_ref.schema.json"
     },
     "asr": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "additionalProperties": true,
       "description": "Raw provider output (opaque)."
     },
