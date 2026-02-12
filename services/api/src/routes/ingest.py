@@ -1,17 +1,15 @@
+from __future__ import annotations
+
 from typing import Literal
 from uuid import uuid4
 
-from domain.ingestion_contract import IngestionJobPayload
-from domain.ingestion_validation import normalize_url, validate_source_fields
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, HttpUrl
 
+from ..domain.ingestion_contract import IngestionJobPayload
+from ..domain.ingestion_validation import normalize_url, validate_source_fields
+
 router = APIRouter()
-
-
-# -------------------------
-# Request Schema (Client → API)
-# -------------------------
 
 
 class IngestSourceRequest(BaseModel):
@@ -27,11 +25,6 @@ class IngestRequest(BaseModel):
     metadata: dict | None = None
 
 
-# -------------------------
-# Route
-# -------------------------
-
-
 @router.post("/ingest", status_code=201)
 async def create_ingestion_job(request: IngestRequest):
     try:
@@ -42,9 +35,6 @@ async def create_ingestion_job(request: IngestRequest):
         video_id = str(uuid4())
         job_id = str(uuid4())
 
-        # -------------------------
-        # Dedupe Strategy
-        # -------------------------
         if source["kind"] in ("youtube", "external_url"):
             dedupe_key = normalize_url(source["url"])
             strategy = "source_url"
@@ -52,9 +42,6 @@ async def create_ingestion_job(request: IngestRequest):
             dedupe_key = source["upload_ref"]
             strategy = "upload_hash"
 
-        # -------------------------
-        # Build Canonical Job Payload
-        # -------------------------
         job_payload = IngestionJobPayload(
             type="video_ingestion",
             version="2.0",
@@ -78,13 +65,7 @@ async def create_ingestion_job(request: IngestRequest):
             },
         )
 
-        # 🔥 IMPORTANT: actually use the payload
         job_payload_dict = job_payload.model_dump()
-
-        # TODO (next issues):
-        # persist Video in DB
-        # persist Job with payload
-        # enqueue job to orchestrator
 
         return {
             "job_id": job_id,

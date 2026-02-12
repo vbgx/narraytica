@@ -4,8 +4,9 @@ import socket
 from typing import Any
 
 import psycopg
-from config import settings
 from fastapi import APIRouter, Response, status
+
+from ..config import settings
 
 router = APIRouter(prefix="/health", tags=["health"])
 
@@ -38,7 +39,6 @@ def _redis_ping(redis_url: str, timeout_s: float = 1.0) -> tuple[bool, str]:
 def health(resp: Response) -> dict[str, Any]:
     out: dict[str, Any] = {"status": "ok"}
 
-    # Optional DB ping
     try:
         if settings.api_database_url:
             dsn = settings.api_database_url.replace(
@@ -57,7 +57,6 @@ def health(resp: Response) -> dict[str, Any]:
         out["status"] = "degraded"
         resp.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
-    # Optional redis ping
     if settings.redis_url:
         ok, msg = _redis_ping(settings.redis_url)
         out["redis"] = "ok" if ok else "error"

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services.api.src.domain.search_filters import SearchFiltersV1
+from domain.search_filters import SearchFiltersV1
 
 
 def build_qdrant_filter(filters: dict | None) -> dict | None:

@@ -5,8 +5,9 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from config import settings
-from telemetry.logging import get_logger
+
+from ...config import settings
+from ...telemetry.logging import get_logger
 
 log = get_logger(__name__)
 
@@ -42,7 +43,6 @@ def put_videos_template() -> None:
 
 
 def ensure_index(index_name: str) -> None:
-    # Create index only if missing (templates will apply)
     r = _request("HEAD", f"{settings.OPENSEARCH_URL}/{index_name}")
     if r.status_code == 200:
         log.info("opensearch index already exists", extra={"index": index_name})
@@ -61,7 +61,6 @@ def bootstrap_opensearch() -> None:
         return
 
     if not ensure_opensearch_ready():
-        # do not crash API on startup; we just log
         return
 
     try:
