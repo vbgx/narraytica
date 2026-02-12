@@ -199,4 +199,4 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
           AWS_EC2_METADATA_DISABLED: "true"
         run: |
-          uv run pytest -q -m "ingest_integration or transcribe_integration"
+          uv run --project services/api pytest -q -m "ingest_integration or transcribe_integration"
