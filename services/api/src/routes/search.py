@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from hashlib import sha256
+from time import monotonic
 from typing import Any
 
 import requests
@@ -11,8 +13,11 @@ from ..domain.search_filters import SearchFiltersV1
 from ..search.hybrid.merge import merge_results
 from ..search.opensearch.lexical_query import build_lexical_query
 from ..search.qdrant.vector_search import VectorSearchError, vector_search
+from ..telemetry.logging import get_logger
+from ..telemetry.request_context import get_request_id
 
 router = APIRouter(prefix="/search", tags=["search"])
+log = get_logger(__name__)
 
 MAX_LIMIT = 100
 
@@ -22,10 +27,7 @@ class SearchRequest(BaseModel):
     filters: dict | None = Field(default=None)
     limit: int = Field(default=20, ge=1, le=MAX_LIMIT)
     offset: int = Field(default=0, ge=0)
-    semantic: bool | None = Field(
-        default=None,
-        description="If true, run vector search (requires non-empty query).",
-    )
+    semantic: bool | None = Field(default=None)
 
 
 class SearchHit(BaseModel):
@@ -48,6 +50,11 @@ def parse_search_filters(filters: dict | None) -> SearchFiltersV1:
         return SearchFiltersV1.model_validate(filters or {})
     except (ValidationError, ValueError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+def _query_fingerprint(q: str) -> str:
+    h = sha256(q.encode("utf-8")).hexdigest()
+    return h[:12]
 
 
 def _opensearch_auth() -> tuple[str, str] | None:
@@ -91,10 +98,11 @@ def _request_timeout() -> float:
 
 def _opensearch_search(
     body: dict[str, Any],
-) -> tuple[list[dict[str, Any]], dict[str, dict]]:
+) -> tuple[list[dict[str, Any]], dict[str, dict], int]:
     url = f"{_opensearch_url()}/{_segments_index()}/_search"
     auth = _opensearch_auth()
 
+    started = monotonic()
     try:
         r = requests.post(
             url,
@@ -115,6 +123,8 @@ def _opensearch_search(
             detail=f"OpenSearch error: {e}",
         ) from e
 
+    took_ms = int((monotonic() - started) * 1000.0)
+
     hits = (((data or {}).get("hits") or {}).get("hits")) or []
     lexical: list[dict[str, Any]] = []
     sources_by_id: dict[str, dict] = {}
@@ -131,16 +141,37 @@ def _opensearch_search(
         if isinstance(src, dict):
             sources_by_id[sid_s] = src
 
-    return lexical, sources_by_id
+    return lexical, sources_by_id, took_ms
 
 
 def _run_search(req: SearchRequest) -> SearchResponse:
-    f = parse_search_filters(req.filters)
+    rid = get_request_id()
 
     query_text = (req.query or "").strip()
+    q_len = len(query_text)
+    q_hash = _query_fingerprint(query_text) if query_text else None
+
     semantic = req.semantic
     if semantic is None:
         semantic = bool(query_text)
+
+    filter_keys = sorted((req.filters or {}).keys())
+
+    log.info(
+        "search_request",
+        extra={
+            "request_id": rid,
+            "query_len": q_len,
+            "query_hash": q_hash,
+            "semantic": semantic,
+            "limit": req.limit,
+            "offset": req.offset,
+            "filter_keys": filter_keys,
+        },
+    )
+
+    started_total = monotonic()
+    f = parse_search_filters(req.filters)
 
     if semantic and not query_text:
         raise HTTPException(
@@ -156,10 +187,13 @@ def _run_search(req: SearchRequest) -> SearchResponse:
         limit=fetch_n,
         offset=0,
     )
-    lexical_hits, sources_by_id = _opensearch_search(lexical_body)
 
+    lexical_hits, sources_by_id, took_os_ms = _opensearch_search(lexical_body)
+
+    took_qdrant_ms = None
     vector_hits: list[dict[str, Any]] = []
     if semantic:
+        v_started = monotonic()
         try:
             v = vector_search(
                 query_text=query_text,
@@ -168,9 +202,22 @@ def _run_search(req: SearchRequest) -> SearchResponse:
             )
             vector_hits = [{"segment_id": x.segment_id, "score": x.score} for x in v]
         except VectorSearchError as e:
+            log.warning(
+                "search_vector_unavailable",
+                extra={
+                    "request_id": rid,
+                    "query_len": q_len,
+                    "query_hash": q_hash,
+                    "error": str(e),
+                },
+            )
             raise HTTPException(status_code=503, detail=str(e)) from e
+        finally:
+            took_qdrant_ms = int((monotonic() - v_started) * 1000.0)
 
+    m_started = monotonic()
     merged = merge_results(lexical=lexical_hits, vector=vector_hits)
+    took_merge_ms = int((monotonic() - m_started) * 1000.0)
 
     page = merged[req.offset : req.offset + req.limit]
     out_items: list[SearchHit] = []
@@ -184,6 +231,27 @@ def _run_search(req: SearchRequest) -> SearchResponse:
                 source=sources_by_id.get(it.segment_id),
             )
         )
+
+    took_total_ms = int((monotonic() - started_total) * 1000.0)
+
+    log.info(
+        "search_result",
+        extra={
+            "request_id": rid,
+            "query_len": q_len,
+            "query_hash": q_hash,
+            "semantic": semantic,
+            "filter_keys": filter_keys,
+            "took_ms_total": took_total_ms,
+            "took_ms_opensearch": took_os_ms,
+            "took_ms_qdrant": took_qdrant_ms,
+            "took_ms_merge": took_merge_ms,
+            "lexical_count": len(lexical_hits),
+            "vector_count": len(vector_hits),
+            "merged_count": len(merged),
+            "returned_count": len(out_items),
+        },
+    )
 
     return SearchResponse(
         items=out_items,
