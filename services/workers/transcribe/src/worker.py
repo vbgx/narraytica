@@ -9,9 +9,11 @@ from uuid import uuid4
 
 from asr.errors import AsrError
 from asr.registry import get_provider
+from asr.runner import transcribe_with_timeout
 from audio_fetch import fetch_audio_to_tmp, resolve_audio_ref
 from lang import detect_language, extract_language_hint, normalize_language
 from packages.shared.storage.s3_client import S3ObjectStorageClient
+from retry import RetryConfig, run_with_retry
 from segmenter.timecodes import normalize_segments
 
 from db.jobs import (
@@ -22,6 +24,12 @@ from db.jobs import (
 from db.transcripts import insert_transcript
 
 logger = logging.getLogger("transcribe-worker")
+
+TRANSCRIBE_MAX_ATTEMPTS = int(os.getenv("TRANSCRIBE_MAX_ATTEMPTS", "3"))
+TRANSCRIBE_BACKOFF_BASE_S = float(os.getenv("TRANSCRIBE_BACKOFF_BASE_S", "0.5"))
+TRANSCRIBE_BACKOFF_MAX_S = float(os.getenv("TRANSCRIBE_BACKOFF_MAX_S", "8"))
+TRANSCRIBE_JOB_TIMEOUT_S = float(os.getenv("TRANSCRIBE_JOB_TIMEOUT_S", "1800"))
+TRANSCRIBE_ATTEMPT_TIMEOUT_S = float(os.getenv("TRANSCRIBE_ATTEMPT_TIMEOUT_S", "600"))
 
 TRANSCRIPT_ARTIFACT_VERSION = "v1"
 
@@ -107,7 +115,49 @@ def _run_asr(job: dict[str, Any]) -> None:
     audio_path = fetch_audio_to_tmp(bucket=bucket, key=key)
 
     provider = get_provider()
-    res = provider.transcribe(audio_path=audio_path)
+
+    cfg = RetryConfig(
+        max_attempts=TRANSCRIBE_MAX_ATTEMPTS,
+        backoff_base_s=TRANSCRIBE_BACKOFF_BASE_S,
+        backoff_max_s=TRANSCRIBE_BACKOFF_MAX_S,
+        job_timeout_s=TRANSCRIBE_JOB_TIMEOUT_S,
+        attempt_timeout_s=TRANSCRIBE_ATTEMPT_TIMEOUT_S,
+    )
+
+    def _attempt(attempt_timeout_s: float):
+        return transcribe_with_timeout(
+            audio_path=audio_path,
+            timeout_s=attempt_timeout_s,
+        )
+
+    def _on_attempt(n: int, t: float) -> None:
+        logger.info(
+            "transcribe_attempt_started",
+            extra={
+                "job_id": job_id,
+                "video_id": video_id,
+                "attempt": n,
+                "attempt_timeout_s": t,
+                "provider": provider.name,
+            },
+        )
+
+    def _on_error(n: int, t: float, e: Exception) -> None:
+        code = getattr(e, "code", None)
+        logger.warning(
+            "transcribe_attempt_failed",
+            extra={
+                "job_id": job_id,
+                "video_id": video_id,
+                "attempt": n,
+                "attempt_timeout_s": t,
+                "provider": provider.name,
+                "error_code": code,
+                "error": str(e),
+            },
+        )
+
+    res = run_with_retry(_attempt, cfg=cfg, on_attempt=_on_attempt, on_error=_on_error)
 
     # Language resolution (deterministic): provider > hint > detection
     language_hint = extract_language_hint(payload)

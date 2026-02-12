@@ -11,3 +11,6 @@ ASR_ERR_PROVIDER_UNAVAILABLE = "asr_provider_unavailable"
 ASR_ERR_AUDIO_REF_MISSING = "asr_audio_ref_missing"
 ASR_ERR_AUDIO_DOWNLOAD_FAILED = "asr_audio_download_failed"
 ASR_ERR_TRANSCRIPTION_FAILED = "asr_transcription_failed"
+
+ASR_ERR_TRANSCRIPTION_TIMEOUT = "asr_transcription_timeout"
+ASR_ERR_JOB_TIMEOUT = "asr_job_timeout"
