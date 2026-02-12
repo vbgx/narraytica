@@ -105,7 +105,7 @@ jobs:
         run: uv sync --project services/api --frozen --group dev
 
       - name: Ensure integration deps
-        run: uv pip install boto3 psycopg[binary] jsonschema
+        run: uv pip install boto3 psycopg[binary] jsonschema faster-whisper
 
       # -----------------------
       # Start MinIO manually (no services:)
