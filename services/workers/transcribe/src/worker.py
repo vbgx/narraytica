@@ -12,6 +12,7 @@ from asr.registry import get_provider
 from asr.runner import transcribe_with_timeout
 from audio_fetch import fetch_audio_to_tmp, resolve_audio_ref
 from lang import detect_language, extract_language_hint, normalize_language
+from obs import emit_job_event, span
 from packages.shared.storage.s3_client import S3ObjectStorageClient
 from retry import RetryConfig, run_with_retry
 from segmenter.timecodes import normalize_segments
@@ -110,6 +111,9 @@ def _run_asr(job: dict[str, Any]) -> None:
     job_id = str(job["id"])
     video_id = str(job["video_id"])
     payload = job.get("payload") or {}
+
+    emit_job_event(event="started", job_id=job_id, video_id=video_id)
+    _job_start_s = __import__("time").monotonic()
 
     bucket, key = resolve_audio_ref(payload)
     audio_path = fetch_audio_to_tmp(bucket=bucket, key=key)
@@ -210,15 +214,34 @@ def _run_asr(job: dict[str, Any]) -> None:
     _duration_ms = int(_segs[-1].get("end_ms", 0)) if _segs else 0
     duration_seconds = _duration_ms / 1000.0
 
-    artifact = _upload_transcript_artifact(
-        video_id=video_id,
+    with span(
+        "storage.upload_transcript",
         job_id=job_id,
+        video_id=video_id,
+        provider=provider.name,
         transcript_id=transcript_id,
-        payload=transcript_payload,
-    )
+    ):
+        artifact = _upload_transcript_artifact(
+            video_id=video_id,
+            job_id=job_id,
+            transcript_id=transcript_id,
+            payload=transcript_payload,
+        )
     storage_ref = _build_storage_ref(artifact)
 
     transcript_payload["storage_ref"] = storage_ref
+    emit_job_event(
+        event="stored",
+        job_id=job_id,
+        video_id=video_id,
+        provider=provider.name,
+        transcript_id=transcript_id,
+        extra={
+            "artifact_bucket": artifact.get("bucket"),
+            "artifact_key": artifact.get("key"),
+            "artifact_bytes": artifact.get("size_bytes"),
+        },
+    )
     # note: artifact JSON includes storage_ref so it is self-describing
     # and retrievable by ref
 
@@ -275,6 +298,12 @@ def main() -> None:
             mark_job_succeeded(job_id=job_id)
             logger.info("job_succeeded", extra={"job_id": job_id})
         except AsrError as e:
+            emit_job_event(
+                event="failed",
+                job_id=job_id,
+                video_id=str(job.get("video_id")),
+                extra={"error_code": e.code, "error": str(e)},
+            )
             mark_job_failed(
                 job_id=job_id,
                 error_message=f"{e.code}: {str(e)}",
@@ -287,6 +316,12 @@ def main() -> None:
                 },
             )
         except Exception as e:
+            emit_job_event(
+                event="failed",
+                job_id=job_id,
+                video_id=str(job.get("video_id")),
+                extra={"error_code": "transcribe_unexpected_error", "error": str(e)},
+            )
             mark_job_failed(
                 job_id=job_id,
                 error_message=f"transcribe_unexpected_error: {str(e)}",
