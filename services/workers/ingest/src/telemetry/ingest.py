@@ -1,6 +1,5 @@
 import logging
 import time
-import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any
@@ -25,13 +24,16 @@ def log_event(ctx: JobCtx, event: str, **extra: Any) -> None:
 
 
 def log_error(ctx: JobCtx, event: str, err: BaseException, **extra: Any) -> None:
-    logger.error(
+    """
+    Logs an error with full stacktrace (via logger.exception).
+    Use this inside an exception handler (except ...) to preserve context.
+    """
+    logger.exception(
         event,
         extra=_base(
             ctx,
             error_type=type(err).__name__,
             error=str(err),
-            traceback="".join(traceback.format_exception(err))[-2000:],
             **extra,
         ),
     )
@@ -62,5 +64,6 @@ def emit_metric(name: str, value: float, labels: dict[str, str] | None = None) -
     """
     labels = labels or {}
     logger.info(
-        "metric", extra={"metric_name": name, "metric_value": value, "labels": labels}
+        "metric",
+        extra={"metric_name": name, "metric_value": value, "labels": labels},
     )

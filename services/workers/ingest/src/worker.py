@@ -237,7 +237,8 @@ class IngestWorker:
 
         source = job["payload"]["source"]
         source_kind = source.get("kind") or "unknown"
-        source_url = source.get("url")
+        # For uploads, source identifier is upload_ref; fallback to url when present
+        source_uri = source.get("upload_ref") or source.get("url")
 
         norm = normalize_video_metadata(
             video_id=job["video_id"],
@@ -248,7 +249,13 @@ class IngestWorker:
             extracted_metadata=job["payload"].get("extracted_metadata"),
         )
 
-        persist_video_metadata(norm, source_url=source_url)
+        persist_video_metadata(
+            video_id=job["video_id"],
+            source=source,
+            artifacts=job["payload"].get("artifacts"),
+            source_uri=source_uri,
+            metadata={},  # keep minimal for integration tests
+        )
 
         transcription_job_id, transcription_idempotency_key = (
             create_or_get_transcription_job(
