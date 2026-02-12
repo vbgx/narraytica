@@ -6,14 +6,9 @@ from fastapi import FastAPI
 
 from .config import settings
 from .routes.health import router as health_router
-from .routes.ingest import router as ingest_router  # EPIC-02
-from .routes.jobs import router as jobs_router
 from .routes.metrics import router as metrics_router
-from .routes.search import router as search_router
-from .routes.segments import router as segments_router
-from .routes.speakers import router as speakers_router
-from .routes.transcripts import router as transcripts_router
-from .routes.videos import router as videos_router
+from .routes.v1 import router as v1_router
+from .telemetry.api_version import ApiVersionHeaderMiddleware
 from .telemetry.http_logging import HttpLoggingMiddleware
 from .telemetry.logging import setup_logging
 from .telemetry.otel import setup_otel
@@ -44,23 +39,19 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="Narralytica API",
-        version="0.1.0",
+        version="1.0.0",
     )
 
     app.add_middleware(RequestIdMiddleware)
     app.add_middleware(HttpLoggingMiddleware)
+    app.add_middleware(ApiVersionHeaderMiddleware, api_version="v1")
 
+    # System endpoints (not versioned)
     app.include_router(health_router, tags=["system"])
     app.include_router(metrics_router, tags=["system"])
 
-    app.include_router(ingest_router, tags=["ingestion"])
-
-    app.include_router(videos_router, tags=["videos"])
-    app.include_router(transcripts_router, tags=["transcripts"])
-    app.include_router(segments_router, tags=["segments"])
-    app.include_router(speakers_router, tags=["speakers"])
-    app.include_router(jobs_router, tags=["jobs"])
-    app.include_router(search_router, tags=["search"])
+    # Public API v1
+    app.include_router(v1_router)
 
     if otel_enabled:
         try:
