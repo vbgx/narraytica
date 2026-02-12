@@ -50,6 +50,9 @@ jobs:
       - name: Ensure contract deps
         run: uv pip install jsonschema
 
+      - name: Contracts anti-drift (P0)
+        run: make ci-contracts
+
       - name: Lint (Node)
         run: pnpm -r lint
 

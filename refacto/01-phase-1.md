@@ -272,7 +272,7 @@ Risques & mitigation
 Confusion schema vs template
 → whitelist par répertoires très précis + doc.
 
-Issue 1.4 — Cartographie “modules à risque” (drift map) + baseline
+## Issue 1.4 — Cartographie “modules à risque” (drift map) + baseline
 
 Title: docs(architecture): add drift-risk map (baseline hotspots) + tracking
 Labels: docs, architecture, drift

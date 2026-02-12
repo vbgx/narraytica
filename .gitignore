@@ -102,3 +102,7 @@ services/workers/ingest/tests/fixtures/media/
 
 # Large media fixtures (kept local only)
 services/workers/ingest/tests/fixtures/media/
+
+# Python / tooling caches
+.pytest_cache/
+.ruff_cache/

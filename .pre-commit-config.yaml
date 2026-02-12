@@ -17,6 +17,12 @@ repos:
 
   - repo: local
     hooks:
+      - id: ci-architecture
+        name: architecture+contracts gate (make ci-architecture)
+        entry: bash -lc 'make ci-architecture'
+        language: system
+        pass_filenames: false
+
       - id: node-lint
         name: node lint (pnpm -r lint)
         entry: bash tools/scripts/precommit-node-lint.sh
