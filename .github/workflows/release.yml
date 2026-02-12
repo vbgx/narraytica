@@ -21,13 +21,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -43,19 +43,28 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Python deps (root)
-        run: uv sync
+        run: uv sync --frozen --group dev
 
-      - name: Install Python deps (API)
-        run: uv sync --project services/api
+      - name: Install Python deps (services/api)
+        run: uv sync --project services/api --frozen --group dev
+
+      - name: Ensure contract deps
+        run: uv pip install jsonschema
 
       - name: Lint (Python)
         run: uv run ruff check .
 
       - name: Format check (Python)
-        run: uv run ruff format . --check
+        run: uv run ruff format --check .
 
-      - name: Tests (API)
-        run: uv run --project services/api pytest -q
+      # IMPORTANT: release workflow must NOT run worker integration tests (MinIO/Postgres),
+      # and must NOT run the whole api test suite without filters.
+      - name: Tests (API - unit/contract only)
+        run: |
+          uv run --project services/api pytest -q \
+            --ignore=services/workers/ingest/tests/integration \
+            --ignore=services/workers/transcribe/tests/integration \
+            --ignore=services/workers/transcription/tests/integration
 
       - name: Lint (Node - optional)
         run: pnpm -r lint || true
