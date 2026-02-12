@@ -25,7 +25,7 @@ def build_lexical_query(
     must: list[dict] = []
     filter_clauses: list[dict] = []
 
-    if query:
+    if query and query.strip():
         must.append(
             {
                 "multi_match": {
@@ -38,26 +38,26 @@ def build_lexical_query(
         )
 
     if filters:
-        if filters.get("language"):
-            filter_clauses.append({"term": {"language": filters["language"]}})
+        compiled = filters.get("__compiled__")
+        if isinstance(compiled, list):
+            filter_clauses.extend(compiled)
+        else:
+            if filters.get("language"):
+                filter_clauses.append({"term": {"language": filters["language"]}})
+            if filters.get("source"):
+                filter_clauses.append({"term": {"source": filters["source"]}})
+            if filters.get("video_id"):
+                filter_clauses.append({"term": {"video_id": filters["video_id"]}})
+            if filters.get("speaker_id"):
+                filter_clauses.append({"term": {"speaker_id": filters["speaker_id"]}})
 
-        if filters.get("source"):
-            filter_clauses.append({"term": {"source": filters["source"]}})
-
-        if filters.get("video_id"):
-            filter_clauses.append({"term": {"video_id": filters["video_id"]}})
-
-        if filters.get("speaker_id"):
-            filter_clauses.append({"term": {"speaker_id": filters["speaker_id"]}})
-
-        date_range: dict[str, Any] = {}
-        if filters.get("date_from"):
-            date_range["gte"] = filters["date_from"]
-        if filters.get("date_to"):
-            date_range["lt"] = filters["date_to"]
-
-        if date_range:
-            filter_clauses.append({"range": {"created_at": date_range}})
+            date_range: dict[str, Any] = {}
+            if filters.get("date_from"):
+                date_range["gte"] = filters["date_from"]
+            if filters.get("date_to"):
+                date_range["lt"] = filters["date_to"]
+            if date_range:
+                filter_clauses.append({"range": {"created_at": date_range}})
 
     if must or filter_clauses:
         query_block = {
@@ -69,7 +69,7 @@ def build_lexical_query(
     else:
         query_block = {"match_all": {}}
 
-    body = {
+    return {
         "from": from_,
         "size": size,
         "query": query_block,
@@ -79,5 +79,3 @@ def build_lexical_query(
             {"id": {"order": "asc"}},
         ],
     }
-
-    return body

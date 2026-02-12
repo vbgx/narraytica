@@ -25,6 +25,13 @@ def iso(dt_value: Any) -> str | None:
     return None
 
 
+def epoch_ms_from_iso(dt: str | None) -> int | None:
+    if not dt:
+        return None
+    d = datetime.fromisoformat(dt.replace("Z", "+00:00"))
+    return int(d.timestamp() * 1000)
+
+
 @dataclass(frozen=True)
 class SegmentDoc:
     segment_id: str
@@ -71,6 +78,7 @@ def build_segment_doc(
 
     created_at = iso(segment.get("created_at"))
     updated_at = iso(segment.get("updated_at"))
+    created_at_ms = epoch_ms_from_iso(created_at)
 
     metadata: dict[str, Any] = {}
     if isinstance(segment.get("metadata"), dict):
@@ -118,6 +126,7 @@ def build_segment_doc(
         "end_ms": end_ms,
         "created_at": created_at,
         "updated_at": updated_at,
+        "created_at_ms": created_at_ms,
     }
 
     return SegmentDoc(segment_id=segment_id, doc=doc, qdrant_payload=qdrant_payload)

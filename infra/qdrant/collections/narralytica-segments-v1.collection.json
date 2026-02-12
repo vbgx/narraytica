@@ -32,7 +32,9 @@
     "end_ms": { "type": "integer" },
 
     "created_at": { "type": "keyword" },
-    "updated_at": { "type": "keyword" }
+    "updated_at": { "type": "keyword" },
+
+    "created_at_ms": { "type": "integer" }
   },
   "payload_indexes": [
     { "field_name": "tenant_id", "field_schema": "keyword" },
@@ -40,6 +42,7 @@
     { "field_name": "transcript_id", "field_schema": "keyword" },
     { "field_name": "speaker_id", "field_schema": "keyword" },
     { "field_name": "language", "field_schema": "keyword" },
-    { "field_name": "source", "field_schema": "keyword" }
+    { "field_name": "source", "field_schema": "keyword" },
+    { "field_name": "created_at_ms", "field_schema": "integer" }
   ]
 }
