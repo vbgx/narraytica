@@ -1,55 +1,40 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-# Resolve repo root assuming this file is: services/api/src/config.py
-REPO_ROOT = Path(__file__).resolve().parents[3]
+import os
+from dataclasses import dataclass
 
 
-class Settings(BaseSettings):
-    # Core
-    env: str = Field(default="local", alias="ENV")
-    log_level: str = Field(default="info", alias="LOG_LEVEL")
+def _env_bool(name: str, default: bool) -> bool:
+    v = os.environ.get(name)
+    if v is None:
+        return default
+    return v.strip().lower() in ("1", "true", "yes", "on")
 
-    # API DB
-    api_database_url: str | None = Field(default=None, alias="API_DATABASE_URL")
 
-    # API auth (EPIC-05)
-    api_key_pepper: str | None = Field(default=None, alias="API_KEY_PEPPER")
+def _env_int(name: str, default: int) -> int:
+    v = os.environ.get(name)
+    if v is None:
+        return default
+    try:
+        return int(v)
+    except Exception:
+        return default
 
-    # Postgres (components)
-    postgres_host: str = Field(default="127.0.0.1", alias="POSTGRES_HOST")
-    postgres_port: int = Field(default=15432, alias="POSTGRES_PORT")
-    postgres_db: str = Field(default="narralytica", alias="POSTGRES_DB")
-    postgres_user: str = Field(default="narralytica", alias="POSTGRES_USER")
-    postgres_password: str = Field(default="narralytica", alias="POSTGRES_PASSWORD")
 
-    # Redis / Search / Vector
-    redis_url: str | None = Field(default=None, alias="REDIS_URL")
-    opensearch_url: str | None = Field(default=None, alias="OPENSEARCH_URL")
-    qdrant_url: str | None = Field(default=None, alias="QDRANT_URL")
+@dataclass(frozen=True)
+class Settings:
+    # Existing settings (keep what you need)
+    opensearch_url: str | None = os.environ.get("OPENSEARCH_URL")
+    opensearch_segments_index: str | None = os.environ.get("OPENSEARCH_SEGMENTS_INDEX")
 
-    # S3 / MinIO
-    s3_endpoint: str | None = Field(default=None, alias="S3_ENDPOINT")
-    s3_access_key: str | None = Field(default=None, alias="S3_ACCESS_KEY")
-    s3_secret_key: str | None = Field(default=None, alias="S3_SECRET_KEY")
-    s3_bucket: str | None = Field(default=None, alias="S3_BUCKET")
+    # Redis (optional)
+    redis_url: str | None = os.environ.get("REDIS_URL")
 
-    # OpenTelemetry (optional)
-    otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
-    otel_exporter_otlp_endpoint: str = Field(
-        default="http://localhost:4318", alias="OTEL_EXPORTER_OTLP_ENDPOINT"
-    )
-    service_name: str = Field(default="narralytica-api", alias="OTEL_SERVICE_NAME")
-
-    model_config = SettingsConfigDict(
-        env_file=(REPO_ROOT / ".env.local", REPO_ROOT / ".env"),
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    # Rate limit
+    rate_limit_enabled: bool = _env_bool("RATE_LIMIT_ENABLED", True)
+    rate_limit_limit: int = _env_int("RATE_LIMIT_LIMIT", 60)
+    rate_limit_window_seconds: int = _env_int("RATE_LIMIT_WINDOW_SECONDS", 60)
+    rate_limit_path_prefix: str = os.environ.get("RATE_LIMIT_PATH_PREFIX", "/api/")
 
 
 settings = Settings()

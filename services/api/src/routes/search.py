@@ -55,10 +55,13 @@ def _opensearch_url() -> str:
 
 
 def _segments_index() -> str:
-    return os.environ.get(
-        "OPENSEARCH_SEGMENTS_INDEX",
-        "narralytica-it-segments",
-    )
+    idx = os.environ.get("OPENSEARCH_SEGMENTS_INDEX")
+    if not idx:
+        raise HTTPException(
+            status_code=503,
+            detail="OPENSEARCH_SEGMENTS_INDEX not configured",
+        )
+    return idx
 
 
 def parse_search_filters(
@@ -89,14 +92,28 @@ def _opensearch_search(
         auth = (user, pwd)
 
     try:
-        r = requests.post(
-            url,
-            json=body,
-            timeout=10,
-            auth=auth,
-        )
+        with requests.Session() as session:
+            # Ignore HTTP(S)_PROXY env vars (important for CI/local)
+            session.trust_env = False
+            r = session.post(
+                url,
+                json=body,
+                timeout=10,
+                auth=auth,
+            )
+
+        # Distinguish client vs server errors from OpenSearch
+        if 400 <= r.status_code < 500:
+            raise HTTPException(
+                status_code=400,
+                detail=f"OpenSearch query error: {r.text}",
+            )
+
         r.raise_for_status()
         data = r.json()
+
+    except HTTPException:
+        raise
     except requests.RequestException as e:
         raise HTTPException(
             status_code=503,
@@ -122,7 +139,6 @@ def _opensearch_search(
 
 
 def _run_search(req: SearchRequest) -> SearchResponse:
-
     query_text = (req.query or "").strip()
     semantic = req.semantic if req.semantic is not None else bool(query_text)
 
@@ -156,7 +172,6 @@ def _run_search(req: SearchRequest) -> SearchResponse:
             )
             vector_hits = [{"segment_id": x.segment_id, "score": x.score} for x in v]
         except VectorSearchError:
-            # degrade gracefully
             vector_hits = []
 
     merged = merge_results(

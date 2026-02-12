@@ -69,8 +69,13 @@ def require_api_key(
     except Exception:
         pass
 
+    from ..middleware.rate_limit import enforce_rate_limit
+
+    rl_headers = enforce_rate_limit(row["id"])
+
     return {
         "api_key_id": row["id"],
         "name": row["name"],
         "scopes": row.get("scopes"),
+        "rate_limit_headers": rl_headers,
     }

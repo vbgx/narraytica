@@ -69,6 +69,11 @@ def build_lexical_query(
     else:
         query_block = {"match_all": {}}
 
+    # NOTE:
+    # Some indexes (including integration-test seed index)
+    # do not have a mapped "id" field.
+    # Sorting on an unmapped field makes OpenSearch return 400.
+    # Use "_id" as a stable tiebreaker instead.
     return {
         "from": from_,
         "size": size,
@@ -76,6 +81,6 @@ def build_lexical_query(
         "sort": [
             {"_score": {"order": "desc"}},
             {"created_at": {"order": "desc"}},
-            {"id": {"order": "asc"}},
+            {"_id": {"order": "asc"}},
         ],
     }
