@@ -1,7 +1,7 @@
 {
   "name": "narralytica-segments-v1",
   "vectors": {
-    "size": 1536,
+    "size": 1024,
     "distance": "Cosine"
   },
   "optimizers_config": {
