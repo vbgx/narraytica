@@ -1,10 +1,9 @@
 name: CI
 
-"on":
-  pull_request: {}
+on:
+  pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -26,15 +25,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: pnpm
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: "10"
 
-      - name: Install Node deps
-        run: pnpm install --frozen-lockfile
+      - name: Get pnpm store path
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       # -----------------------
       # Python / uv
@@ -48,6 +53,12 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
+
+      # -----------------------
+      # Install deps
+      # -----------------------
+      - name: Install Node deps
+        run: pnpm install --frozen-lockfile
 
       - name: Install Python deps (root)
         run: uv sync --frozen
@@ -74,7 +85,7 @@ jobs:
         run: uv run --project services/api pytest -q
 
       # -----------------------
-      # Build checks
+      # Build
       # -----------------------
       - name: Build (Node)
         run: pnpm -r build
