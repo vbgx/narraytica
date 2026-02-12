@@ -3,7 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from ..auth.deps import require_api_key
-from .ingest import router as ingest_router  # EPIC-02
+
+# Sub-routers
+from .ingest import router as ingest_router
 from .jobs import router as jobs_router
 from .search import router as search_router
 from .segments import router as segments_router
@@ -17,6 +19,10 @@ router = APIRouter(
     prefix=API_V1_PREFIX,
     dependencies=[Depends(require_api_key)],
 )
+
+# ------------------------------------------------------------------
+# Versioned surface
+# ------------------------------------------------------------------
 
 router.include_router(ingest_router, tags=["ingestion"])
 router.include_router(videos_router, tags=["videos"])

@@ -7,8 +7,14 @@ from .middleware import RateLimitMiddleware
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Narralytica API")
+    app = FastAPI(
+        title="Narralytica API",
+        version="v1",
+    )
 
+    # ------------------------------------------------------------------
+    # Middleware
+    # ------------------------------------------------------------------
     app.add_middleware(
         RateLimitMiddleware,
         enabled=settings.rate_limit_enabled,
@@ -18,14 +24,15 @@ def create_app() -> FastAPI:
         path_prefix=settings.rate_limit_path_prefix,
     )
 
-    from .routes import ingest, search, transcripts, videos
+    # ------------------------------------------------------------------
+    # API Routers (single entrypoint)
+    # ------------------------------------------------------------------
+    from .routes.v1 import router as v1_router
 
-    app.include_router(ingest.router, prefix="/api/v1")
-    app.include_router(search.router, prefix="/api/v1")
-    app.include_router(videos.router, prefix="/api/v1")
-    app.include_router(transcripts.router, prefix="/api/v1")
+    app.include_router(v1_router)
 
     return app
 
 
+# ASGI entrypoint
 app = create_app()

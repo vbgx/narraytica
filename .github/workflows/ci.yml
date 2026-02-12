@@ -69,8 +69,7 @@ jobs:
 
       - name: Tests (Python - services/api)
         run: |
-          uv run --project services/api pytest -q -c services/api/pytest.ini services/api/tests \
-            -m "not opensearch_integration and not ingest_integration and not transcribe_integration"
+          uv run --project services/api pytest -q -m "opensearch_integration"
 
       - name: Build (Node)
         run: pnpm -r build

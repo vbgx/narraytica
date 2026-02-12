@@ -15,9 +15,12 @@ def get_engine() -> Engine:
     if _engine is not None:
         return _engine
 
-    database_url = settings.api_database_url
+    database_url = settings.db_url
     if not database_url:
-        raise RuntimeError("API_DATABASE_URL is required (settings.api_database_url)")
+        raise RuntimeError(
+            "DATABASE_URL is required (preferred). "
+            "Fallback supported: API_DATABASE_URL."
+        )
 
     _engine = create_engine(
         database_url,
