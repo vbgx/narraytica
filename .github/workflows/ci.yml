@@ -25,7 +25,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          # NOTE: cache désactivé (GH cache 400). On le remettra quand tout passe.
+          # cache: "pnpm"
 
       - name: Install Node deps
         run: pnpm install --frozen-lockfile
@@ -38,7 +39,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v3
         with:
-          enable-cache: true
+          enable-cache: false
 
       - name: Install Python deps (root)
         run: uv sync --frozen --group dev
@@ -55,9 +56,9 @@ jobs:
       - name: Format check (Python)
         run: uv run ruff format --check .
 
-      # IMPORTANT: on exclut les tests d’intégration (MinIO/S3) ici
+      # IMPORTANT: pas d'intégration ici (MinIO/S3)
       - name: Tests (Python - non-integration)
-        run: uv run --project services/api pytest -q -m "not ingest_integration and not transcribe_integration"
+        run: uv run pytest -q -m "not ingest_integration and not transcribe_integration"
 
       - name: Build (Node)
         run: pnpm -r build
@@ -71,8 +72,8 @@ jobs:
       minio:
         image: minio/minio:RELEASE.2025-01-20T14-49-07Z
         ports:
-          - 9000:9000
-          - 9001:9001
+          - 19000:9000
+          - 19001:9001
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -81,7 +82,7 @@ jobs:
           --health-cmd "curl -f http://localhost:9000/minio/health/ready || exit 1"
           --health-interval 5s
           --health-timeout 3s
-          --health-retries 20
+          --health-retries 40
           --entrypoint "minio"
           server /data --console-address ":9001"
 
@@ -97,7 +98,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v3
         with:
-          enable-cache: true
+          enable-cache: false
 
       - name: Install Python deps (root)
         run: uv sync --frozen --group dev
@@ -107,8 +108,8 @@ jobs:
 
       - name: Wait for MinIO ready
         run: |
-          for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:9000/minio/health/ready >/dev/null; then
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:19000/minio/health/ready >/dev/null; then
               echo "MinIO ready"
               exit 0
             fi
@@ -121,14 +122,15 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
-          AWS_REGION: us-east-1
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_EC2_METADATA_DISABLED: "true"
         run: |
           python - <<'PY'
           import boto3
 
           s3 = boto3.client(
               "s3",
-              endpoint_url="http://127.0.0.1:9000",
+              endpoint_url="http://127.0.0.1:19000",
               aws_access_key_id="minioadmin",
               aws_secret_access_key="minioadmin",
               region_name="us-east-1",
@@ -146,11 +148,19 @@ jobs:
       - name: Integration tests (MinIO/S3)
         env:
           ENV: test
-          S3_ENDPOINT: http://127.0.0.1:9000
+
+          # ✅ ce que tes tests utilisent (vu dans la trace: 19000)
+          S3_ENDPOINT: http://127.0.0.1:19000
           S3_ACCESS_KEY: minioadmin
           S3_SECRET_KEY: minioadmin
           UPLOADS_BUCKET: uploads
           AUDIO_BUCKET: audio-tracks
           TRANSCRIPTS_BUCKET: transcripts
+
+          # ✅ en bonus (au cas où certaines libs lisent AWS_*)
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_EC2_METADATA_DISABLED: "true"
         run: |
           uv run pytest -q -m "ingest_integration or transcribe_integration"
