@@ -5,7 +5,10 @@ import os
 from typing import Any
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
+
+pytestmark = pytest.mark.opensearch_integration
 
 OS_URL = os.environ.get("OPENSEARCH_URL", "http://127.0.0.1:9200").rstrip("/")
 INDEX = os.environ.get("OPENSEARCH_SEGMENTS_INDEX", "narralytica-segments-v1").strip()
@@ -56,7 +59,6 @@ def seed_opensearch(
             },
         },
     )
-    # 200 OK if created, 400 if already exists (but we deleted), keep strict
     r.raise_for_status()
 
     # Index docs (IDs are segment IDs, as used by the API)

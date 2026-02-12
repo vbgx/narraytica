@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import importlib
 import os
+import uuid
 
+import pytest
 import requests
+
+pytestmark = pytest.mark.opensearch_integration
 
 
 def _auth():
@@ -14,17 +18,17 @@ def _auth():
 
 def test_opensearch_bootstrap_idempotent(monkeypatch):
     """
-    Integration test (local):
+    OpenSearch integration test:
     - calls bootstrap_opensearch() twice
     - asserts the target index exists after
     """
-    # Ensure environment for settings
-    os.environ["OPENSEARCH_URL"] = "http://localhost:9200"
-    os.environ["OPENSEARCH_USERNAME"] = "admin"
-    os.environ["OPENSEARCH_PASSWORD"] = "LocalDevOnly_ChangeMe_123!"
+    # Allow CI to inject OPENSEARCH_URL. Keep a safe local default.
+    os.environ.setdefault("OPENSEARCH_URL", "http://127.0.0.1:9200")
+    os.environ.setdefault("OPENSEARCH_USERNAME", "admin")
+    os.environ.setdefault("OPENSEARCH_PASSWORD", "LocalDevOnly_ChangeMe_123!")
 
     # Pick a unique index name for this test run
-    index_name = "narralytica-it-bootstrap-videos"
+    index_name = f"narralytica-it-bootstrap-videos-{uuid.uuid4().hex[:8]}"
 
     # We want bootstrap enabled and deterministic timeouts
     os.environ["OPENSEARCH_BOOTSTRAP_ENABLED"] = "true"
@@ -44,7 +48,7 @@ def test_opensearch_bootstrap_idempotent(monkeypatch):
     base = os.environ["OPENSEARCH_URL"].rstrip("/")
     auth = _auth()
 
-    # Clean up any prior index from earlier runs
+    # Clean up any prior index from earlier runs (best-effort)
     requests.delete(f"{base}/{index_name}", auth=auth, timeout=10)
 
     # Call twice: must be idempotent

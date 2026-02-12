@@ -69,10 +69,67 @@ jobs:
 
       - name: Tests (Python - services/api)
         run: |
-          uv run --project services/api pytest -q services/api/tests
+          uv run --project services/api pytest -q services/api/tests \
+            -m "not opensearch_integration and not ingest_integration and not transcribe_integration"
 
       - name: Build (Node)
         run: pnpm -r build
+
+  integration-opensearch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: lint-test-build
+
+    env:
+      ENV: test
+      OPENSEARCH_URL: http://127.0.0.1:19200
+      OPENSEARCH_USERNAME: admin
+      OPENSEARCH_PASSWORD: LocalDevOnly_ChangeMe_123!
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: false
+
+      - name: Install Python deps (services/api)
+        run: uv sync --project services/api --frozen --group dev
+
+      - name: Start OpenSearch
+        run: |
+          docker rm -f opensearch >/dev/null 2>&1 || true
+          docker run -d \
+            --name opensearch \
+            -p 19200:9200 \
+            -e "discovery.type=single-node" \
+            -e "plugins.security.disabled=true" \
+            -e "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" \
+            opensearchproject/opensearch:2.14.0
+
+      - name: Wait for OpenSearch ready
+        run: |
+          for i in $(seq 1 180); do
+            if curl -fsS http://127.0.0.1:19200/_cluster/health >/dev/null; then
+              echo "OpenSearch ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "OpenSearch not ready in time" >&2
+          docker logs opensearch || true
+          exit 1
+
+      - name: Integration tests (OpenSearch)
+        run: |
+          uv run --project services/api pytest -q -m "opensearch_integration"
 
   integration-minio:
     runs-on: ubuntu-latest
