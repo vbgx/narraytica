@@ -1,0 +1,4 @@
+[
+  { "segment_id": "seg_a", "score": 0.75, "lexical_rank": 1, "vector_rank": 2 },
+  { "segment_id": "seg_b", "score": 0.75, "lexical_rank": 2, "vector_rank": 1 }
+]

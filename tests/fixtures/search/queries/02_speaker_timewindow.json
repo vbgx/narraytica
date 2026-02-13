@@ -1,0 +1,10 @@
+{
+  "query": "hello world",
+  "filters": {
+    "speaker_id": "spk_01",
+    "date_from": "2024-01-01T00:00:00Z",
+    "date_to": "2024-02-01T00:00:00Z"
+  },
+  "limit": 10,
+  "offset": 0
+}

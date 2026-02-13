@@ -1,0 +1,27 @@
+{
+  "from": 0,
+  "size": 20,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "multi_match": {
+            "query": "bonjour monde",
+            "fields": ["text^3", "text.prefix"],
+            "type": "best_fields",
+            "operator": "and"
+          }
+        }
+      ],
+      "filter": [
+        { "term": { "language": "fr" } },
+        { "term": { "source": "youtube" } }
+      ]
+    }
+  },
+  "sort": [
+    { "_score": { "order": "desc" } },
+    { "created_at": { "order": "desc" } },
+    { "_id": { "order": "asc" } }
+  ]
+}

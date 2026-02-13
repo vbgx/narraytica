@@ -1,0 +1,12 @@
+{
+  "lexical": [
+    {"segment_id": "seg_a", "score": 10.0},
+    {"segment_id": "seg_b", "score": 9.0}
+  ],
+  "vector": [
+    {"segment_id": "seg_b", "score": 0.99},
+    {"segment_id": "seg_c", "score": 0.98}
+  ],
+  "weight_lexical": 0.5,
+  "weight_vector": 0.5
+}

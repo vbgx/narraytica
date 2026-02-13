@@ -1,0 +1,9 @@
+{
+  "query": "bonjour monde",
+  "filters": {
+    "language": "fr",
+    "source": "youtube"
+  },
+  "limit": 20,
+  "offset": 0
+}

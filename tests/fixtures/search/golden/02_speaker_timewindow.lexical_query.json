@@ -1,0 +1,27 @@
+{
+  "from": 0,
+  "size": 10,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "multi_match": {
+            "query": "hello world",
+            "fields": ["text^3", "text.prefix"],
+            "type": "best_fields",
+            "operator": "and"
+          }
+        }
+      ],
+      "filter": [
+        { "term": { "speaker_id": "spk_01" } },
+        { "range": { "created_at": { "gte": "2024-01-01T00:00:00Z", "lt": "2024-02-01T00:00:00Z" } } }
+      ]
+    }
+  },
+  "sort": [
+    { "_score": { "order": "desc" } },
+    { "created_at": { "order": "desc" } },
+    { "_id": { "order": "asc" } }
+  ]
+}
