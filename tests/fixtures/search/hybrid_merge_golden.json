@@ -1,0 +1,73 @@
+{
+  "cases": [
+    {
+      "items": [
+        {
+          "lexical_rank": 2,
+          "score": 0.8333333333333333,
+          "segment_id": "b",
+          "vector_rank": 1
+        },
+        {
+          "lexical_rank": 1,
+          "score": 0.5,
+          "segment_id": "a",
+          "vector_rank": null
+        },
+        {
+          "lexical_rank": 3,
+          "score": 0.5,
+          "segment_id": "c",
+          "vector_rank": 2
+        },
+        {
+          "lexical_rank": null,
+          "score": 0.16666666666666666,
+          "segment_id": "d",
+          "vector_rank": 3
+        }
+      ],
+      "name": "basic_union"
+    },
+    {
+      "items": [
+        {
+          "lexical_rank": 1,
+          "score": 0.5,
+          "segment_id": "x",
+          "vector_rank": null
+        },
+        {
+          "lexical_rank": 2,
+          "score": 0.25,
+          "segment_id": "y",
+          "vector_rank": null
+        }
+      ],
+      "name": "lexical_only"
+    },
+    {
+      "items": [
+        {
+          "lexical_rank": null,
+          "score": 0.5,
+          "segment_id": "u",
+          "vector_rank": 1
+        },
+        {
+          "lexical_rank": null,
+          "score": 0.3333333333333333,
+          "segment_id": "v",
+          "vector_rank": 2
+        },
+        {
+          "lexical_rank": null,
+          "score": 0.16666666666666666,
+          "segment_id": "w",
+          "vector_rank": 3
+        }
+      ],
+      "name": "vector_only"
+    }
+  ]
+}
