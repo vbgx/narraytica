@@ -2,39 +2,37 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...domain.search_filters import SearchFiltersV1
 
-
-def build_qdrant_filter(
-    filters: dict[str, Any] | SearchFiltersV1,
-) -> dict[str, Any] | None:
+def build_qdrant_filter(filters: dict | None) -> dict[str, Any] | None:
     """
-    Build a Qdrant filter for vector search.
+    Infra function.
+    Accepts raw dict filters (already parsed upstream).
 
-    Contract (as enforced by tests):
-    - accepts raw dict or SearchFiltersV1
-    - term filters only (language/source/video_id/speaker_id)
-    - rejects date range filters (date_from/date_to)
+    Contract (tests):
+    - Reject date ranges (date_from/date_to) because Qdrant payload filtering
+      isn't supported/defined yet.
+    - No import from services/api/src/domain/*
     """
-    if isinstance(filters, SearchFiltersV1):
-        f = filters
-    else:
-        f = SearchFiltersV1.model_validate(filters or {})
+    if not filters or not isinstance(filters, dict):
+        return None
 
-    if f.date_from or f.date_to:
-        raise ValueError("date range filters are not supported for vector search")
+    # Explicitly reject date ranges (stable behavior, no silent ignoring)
+    if filters.get("date_from") or filters.get("date_to"):
+        raise ValueError("date range filtering is not supported for vector search")
 
     must: list[dict[str, Any]] = []
 
-    def term(key: str, value: str | None) -> None:
-        if value is None:
-            return
-        must.append({"key": key, "match": {"value": value}})
+    if filters.get("language"):
+        must.append({"key": "language", "match": {"value": filters["language"]}})
 
-    term("language", f.language)
-    term("source", f.source)
-    term("video_id", f.video_id)
-    term("speaker_id", f.speaker_id)
+    if filters.get("source"):
+        must.append({"key": "source", "match": {"value": filters["source"]}})
+
+    if filters.get("video_id"):
+        must.append({"key": "video_id", "match": {"value": filters["video_id"]}})
+
+    if filters.get("speaker_id"):
+        must.append({"key": "speaker_id", "match": {"value": filters["speaker_id"]}})
 
     if not must:
         return None

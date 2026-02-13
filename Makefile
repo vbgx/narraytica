@@ -58,3 +58,7 @@ py-format-check:
 
 node-lint:
 	pnpm -r lint
+
+.PHONY: check-api-domain
+check-api-domain:
+	uv run python tools/ci/check_no_api_domain_growth.py

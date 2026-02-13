@@ -9,7 +9,7 @@ Scope prioritaire
 Principe de phase
 On ne refait pas les features : on déplace la logique vers un endroit stable, en gardant des wrappers compat dans l’API au début.
 
-Issue 2.1 — Créer packages/application (squelette + règles + “ports”)
+## Issue 2.1 — Créer packages/application (squelette + règles + “ports”)
 
 Title: refactor(application): introduce packages/application skeleton (ports + use_cases)
 Labels: refactor, architecture, application-layer
@@ -78,7 +78,7 @@ Risques & mitigation
 Surdesign ports : trop d’interfaces, peu utilisées
 → v0 minimal : seulement ce qui est nécessaire à /search, /jobs, /ingest.
 
-Issue 2.2 — Définir des DTO/Contracts boundary (API ↔ use-cases) sans fuite FastAPI
+## Issue 2.2 — Définir des DTO/Contracts boundary (API ↔ use-cases) sans fuite FastAPI
 
 Title: refactor(application): define boundary DTOs for ingest/jobs/search (contract-first)
 Labels: refactor, contracts, application-layer
@@ -122,7 +122,7 @@ Risques & mitigation
 Double modélisation (DTO + schema)
 → DTO = “shape Python”, schema = “source of truth”. DTO doit rester thin.
 
-Issue 2.3 — Extraction SEARCH: routes → use_case.search (sans changer output)
+## Issue 2.3 — Extraction SEARCH: routes → use_case.search (sans changer output)
 
 Title: refactor(search): move search orchestration out of routes into application use-case
 Labels: refactor, search, application-layer

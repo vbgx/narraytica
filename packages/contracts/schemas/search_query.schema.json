@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://narralytica.ai/schemas/search_query.schema.json",
+  "title": "SearchQueryV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["limit", "offset"],
+  "properties": {
+    "query": { "type": ["string", "null"] },
+    "filters": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "language": { "type": ["string", "null"], "minLength": 2 },
+        "source": { "type": ["string", "null"] },
+        "video_id": { "type": ["string", "null"], "minLength": 1 },
+        "speaker_id": { "type": ["string", "null"], "minLength": 1 },
+        "date_from": { "type": ["string", "null"] },
+        "date_to": { "type": ["string", "null"] }
+      }
+    },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "offset": { "type": "integer", "minimum": 0 },
+    "mode": { "type": ["string", "null"], "enum": ["lexical", "semantic", "hybrid", null] }
+  }
+}
