@@ -1,19 +1,47 @@
-from pathlib import Path
+from __future__ import annotations
 
-# Repo root derived from this file location (deterministic, no CWD dependency).
-REPO_ROOT = Path(__file__).resolve().parents[6]
+import os
 
-TEMPLATE_PATH = (
-    REPO_ROOT
-    / "infra"
-    / "opensearch"
-    / "templates"
-    / "narralytica-videos-v1.template.json"
-)
+import requests
 
 
-def load_template() -> dict:
-    import json
+def _auth():
+    user = os.environ.get("OPENSEARCH_USERNAME")
+    pwd = os.environ.get("OPENSEARCH_PASSWORD")
+    if user and pwd:
+        return (user, pwd)
+    return None
 
-    with TEMPLATE_PATH.open("r", encoding="utf-8") as f:
-        return json.load(f)
+
+def bootstrap_opensearch() -> None:
+    """
+    Idempotent OpenSearch bootstrap used by integration tests.
+
+    - If OPENSEARCH_BOOTSTRAP_ENABLED != "true" → no-op
+    - Ensures target index exists
+    - Safe to call multiple times
+    """
+
+    if os.environ.get("OPENSEARCH_BOOTSTRAP_ENABLED") != "true":
+        return
+
+    base = os.environ.get("OPENSEARCH_URL")
+    index = os.environ.get("OPENSEARCH_VIDEOS_INDEX")
+
+    if not base or not index:
+        return
+
+    base = base.rstrip("/")
+    auth = _auth()
+
+    # Check if index exists
+    r = requests.head(f"{base}/{index}", auth=auth, timeout=10)
+
+    if r.status_code == 404:
+        # Create empty index
+        requests.put(
+            f"{base}/{index}",
+            json={},
+            auth=auth,
+            timeout=10,
+        )

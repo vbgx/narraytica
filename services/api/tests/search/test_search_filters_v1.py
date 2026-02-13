@@ -1,5 +1,5 @@
 import pytest
-from services.api.src.domain.search_filters import SearchFiltersV1
+from packages.domain.search.filters import SearchFiltersV1
 
 
 def test_filters_empty_ok():

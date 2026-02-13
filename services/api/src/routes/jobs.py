@@ -6,9 +6,9 @@ from fastapi import APIRouter, HTTPException, Query
 from packages.application.errors import AppError
 from packages.application.jobs.ports import JobsRepoPort
 from packages.application.jobs.use_case import (
-    get_job_run_use_case,
     get_job_use_case,
     list_job_events_use_case,
+    list_job_runs_use_case,
     list_jobs_use_case,
 )
 
@@ -88,7 +88,7 @@ def get_job(job_id: str):
 @router.get("/{job_id}/runs")
 def get_runs(job_id: str):
     try:
-        return get_job_run_use_case(repo=Repo(), job_id=job_id)
+        return list_job_runs_use_case(repo=Repo(), job_id=job_id)
     except AppError as e:
         raise _http_from_app_error(e) from e
 

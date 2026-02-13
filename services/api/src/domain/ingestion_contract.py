@@ -1,16 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from packages.domain.ingest.contracts import (
+    IngestOptions,
+    IngestRequest,
+    IngestSource,
+)
 
-from pydantic import BaseModel, Field
+"""
+DEPRECATED WRAPPER.
 
+This module delegates to packages.domain.ingest.contracts.
+It exists only for backward compatibility and will be removed in Phase 7.
+"""
 
-class IngestionJobPayload(BaseModel):
-    type: Literal["video_ingestion"] = "video_ingestion"
-    version: str = Field(default="2.0")
-    video_id: str
-
-    source: dict[str, Any]
-    dedupe: dict[str, Any]
-    artifacts: dict[str, Any]
-    metadata: dict[str, Any] | None = None
+__all__ = [
+    "IngestRequest",
+    "IngestSource",
+    "IngestOptions",
+]

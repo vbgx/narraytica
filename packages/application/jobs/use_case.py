@@ -16,7 +16,7 @@ class JobsRepoPort(Protocol):
     def list_job_events(
         self, job_id: str, *, limit: int, offset: int
     ) -> list[dict[str, Any]]: ...
-    def get_job_run(self, job_id: str) -> dict[str, Any] | None: ...
+    def list_job_runs(self, job_id: str) -> list[dict[str, Any]]: ...
 
 
 def get_job_use_case(*, repo: JobsRepoPort, job_id: str) -> dict[str, Any]:
@@ -47,6 +47,17 @@ def list_jobs_use_case(
     return out
 
 
+def list_job_runs_use_case(*, repo: JobsRepoPort, job_id: str) -> list[dict[str, Any]]:
+    rows = repo.list_job_runs(job_id)
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        try:
+            out.append(normalize_job_run(r))
+        except Exception:
+            continue
+    return out
+
+
 def list_job_events_use_case(
     *, repo: JobsRepoPort, job_id: str, limit: int, offset: int
 ) -> list[dict[str, Any]]:
@@ -58,18 +69,3 @@ def list_job_events_use_case(
         except Exception:
             continue
     return out
-
-
-def get_job_run_use_case(*, repo: JobsRepoPort, job_id: str) -> dict[str, Any]:
-    raw = repo.get_job_run(job_id)
-    if raw is None:
-        raise AppError(code="not_found", message="job run not found")
-
-    try:
-        return normalize_job_run(raw)
-    except Exception as e:
-        raise AppError(
-            code="internal_error",
-            message="invalid job run shape",
-            details=str(e),
-        ) from e
