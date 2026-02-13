@@ -239,7 +239,7 @@ Risques & mitigation
 Couplage DB (si routes parlent SQL directement)
 → le port JobsRepoPort peut d’abord déléguer à l’existant, PHASE 4 unifie les repos.
 
-Issue 2.5 — Extraction INGEST: routes → use_case.ingest (API ne fait plus que déclencher)
+# 2.5 — Extraction INGEST: routes → use_case.ingest (API ne fait plus que déclencher)
 
 Title: refactor(ingest): move ingest orchestration into application use-case (trigger only in API)
 Labels: refactor, ingest, application-layer
@@ -286,7 +286,7 @@ Risques & mitigation
 Ambiguïté “API vs worker”
 → règle simple : API “requests”, worker “executes”.
 
-Issue 2.6 — Supprimer (ou réduire à wrappers) services/api/src/domain/* (anti-domain-in-api)
+# Issue 2.6 — Supprimer (ou réduire à wrappers) services/api/src/domain/* (anti-domain-in-api)
 
 Title: refactor(api): deprecate services/api/src/domain/* (move to packages/domain + application)
 Labels: refactor, architecture, drift
@@ -341,7 +341,7 @@ Risques & mitigation
 Oubli de cas edge
 → golden tests + integration existants inchangés.
 
-Issue 2.7 — Golden tests: sémantique des filtres + hybrid merge (anti-régression)
+# Issue 2.7 — Golden tests: sémantique des filtres + hybrid merge (anti-régression)
 
 Title: tests(search): add golden tests for filters semantics and hybrid merge
 Labels: tests, search, drift
