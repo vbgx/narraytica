@@ -1,0 +1,26 @@
+{
+  "index_patterns": ["narralytica-segments-v1"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "properties": {
+        "video_id": { "type": "keyword" },
+        "transcript_id": { "type": "keyword" },
+        "speaker_id": { "type": "keyword" },
+        "segment_index": { "type": "integer" },
+        "start_ms": { "type": "integer" },
+        "end_ms": { "type": "integer" },
+        "text": { "type": "text" },
+        "language": { "type": "keyword" },
+        "source": { "type": "keyword" },
+        "created_at": { "type": "date" },
+        "updated_at": { "type": "date" }
+      }
+    }
+  },
+  "priority": 200,
+  "version": 1
+}

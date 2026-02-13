@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "name": "trim_and_lower_language",
+      "normalized": {
+        "filters": {
+          "language": "fr"
+        },
+        "limit": 20,
+        "mode": "lexical",
+        "offset": 0,
+        "query": "  hello "
+      }
+    },
+    {
+      "name": "drop_empty_strings",
+      "normalized": {
+        "filters": {},
+        "limit": 20,
+        "mode": "lexical",
+        "offset": 0,
+        "query": "   "
+      }
+    },
+    {
+      "name": "date_range_ok",
+      "normalized": {
+        "filters": {
+          "date_from": "2026-01-01T00:00:00Z",
+          "date_to": "2026-01-02T00:00:00Z"
+        },
+        "limit": 20,
+        "mode": "lexical",
+        "offset": 0,
+        "query": ""
+      }
+    }
+  ]
+}

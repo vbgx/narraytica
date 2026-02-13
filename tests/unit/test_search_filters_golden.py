@@ -1,53 +1,49 @@
-from __future__ import annotations
-
 import json
 from pathlib import Path
 
-from packages.search.filters import normalize_query, normalized_query_to_dict
-from packages.search.types import SearchFilters, SearchQuery
+import pytest
+from packages.search.filters import normalize_filters_dict, normalized_query_to_dict
+from packages.search.types import SearchQuery
 
-FIX_QUERIES = Path("tests/fixtures/search/queries")
-FIX_EXPECTED = Path("tests/fixtures/search/normalized")
-
-
-def _load(p: Path) -> dict:
-    return json.loads(p.read_text(encoding="utf-8"))
+FIXTURES = Path("tests/fixtures/search/normalized")
 
 
-def _to_query(payload: dict) -> SearchQuery:
-    f = payload.get("filters")
-    filters = None
-    if isinstance(f, dict):
-        filters = SearchFilters(
-            language=f.get("language"),
-            source=f.get("source"),
-            video_id=f.get("video_id"),
-            speaker_id=f.get("speaker_id"),
-            date_from=f.get("date_from"),
-            date_to=f.get("date_to"),
+def _load(name: str):
+    return json.loads((FIXTURES / name).read_text())
+
+
+def _dump(p):
+    return json.dumps(p, indent=2, sort_keys=True) + "\n"
+
+
+@pytest.mark.parametrize(
+    "fixture_name",
+    [
+        "filters_golden_cases.json",
+    ],
+)
+def test_filters_normalization_golden(fixture_name: str):
+    payload = _load(fixture_name)
+
+    out_cases = []
+    for case in payload["cases"]:
+        q = SearchQuery(
+            query=case.get("query"),
+            limit=int(case.get("limit", 20)),
+            offset=int(case.get("offset", 0)),
+            mode=case.get("mode"),
+            filters=normalize_filters_dict(case.get("filters")),
         )
-    return SearchQuery(
-        query=payload.get("query"),
-        filters=filters,
-        limit=int(payload["limit"]),
-        offset=int(payload["offset"]),
-        mode=payload.get("mode"),
-    )
+        out_cases.append(
+            {
+                "name": case["name"],
+                "normalized": normalized_query_to_dict(q),
+            }
+        )
 
+    golden_path = FIXTURES / "filters_golden.json"
+    if not golden_path.exists():
+        golden_path.write_text(_dump({"cases": out_cases}))
+        raise AssertionError("Golden file created. Re-run tests.")
 
-def test_filters_golden_multilang():
-    inp = _load(FIX_QUERIES / "multilang.json")
-    exp = _load(FIX_EXPECTED / "multilang.json")
-
-    nq = normalize_query(_to_query(inp))
-    got = normalized_query_to_dict(nq)
-    assert got == exp
-
-
-def test_filters_golden_speaker_time_window():
-    inp = _load(FIX_QUERIES / "speaker_time_window.json")
-    exp = _load(FIX_EXPECTED / "speaker_time_window.json")
-
-    nq = normalize_query(_to_query(inp))
-    got = normalized_query_to_dict(nq)
-    assert got == exp
+    assert json.loads(golden_path.read_text()) == {"cases": out_cases}

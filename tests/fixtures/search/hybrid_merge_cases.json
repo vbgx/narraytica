@@ -1,0 +1,19 @@
+{
+  "cases": [
+    {
+      "name": "basic_union",
+      "lexical_ids": ["a", "b", "c"],
+      "vector_ids": ["b", "c", "d"]
+    },
+    {
+      "name": "lexical_only",
+      "lexical_ids": ["x", "y"],
+      "vector_ids": []
+    },
+    {
+      "name": "vector_only",
+      "lexical_ids": [],
+      "vector_ids": ["u", "v", "w"]
+    }
+  ]
+}

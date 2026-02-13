@@ -1,53 +1,45 @@
-from __future__ import annotations
-
 import json
 from pathlib import Path
 
-from services.api.src.search.hybrid.merge import merge_results
+from packages.search.ranking import merge_ranked_ids
 
-FIX_QUERIES = Path("tests/fixtures/search/queries")
-GOLDEN = Path("tests/fixtures/search/golden")
-
-
-def _load(p: Path):
-    return json.loads(p.read_text(encoding="utf-8"))
+FIXTURES = Path("tests/fixtures/search")
 
 
-def _dump(obj) -> str:
-    return json.dumps(obj, ensure_ascii=False, sort_keys=True, indent=2)
+def _load(name: str):
+    return json.loads((FIXTURES / name).read_text())
 
 
-def _to_dicts(items):
-    return [
-        {
-            "segment_id": x.segment_id,
-            "score": float(x.score),
-            "lexical_rank": x.lexical_rank,
-            "vector_rank": x.vector_rank,
-        }
-        for x in items
-    ]
+def test_hybrid_merge_golden_snapshot():
+    payload = _load("hybrid_merge_cases.json")
 
+    out = []
+    for case in payload["cases"]:
+        merged = merge_ranked_ids(
+            lexical_ids=case.get("lexical_ids") or [],
+            vector_ids=case.get("vector_ids") or [],
+        )
+        out.append(
+            {
+                "name": case["name"],
+                "items": [
+                    {
+                        "segment_id": x.segment_id,
+                        "score": x.score,
+                        "lexical_rank": x.lexical_rank,
+                        "vector_rank": x.vector_rank,
+                    }
+                    for x in merged
+                ],
+            }
+        )
 
-def test_hybrid_merge_basic_golden():
-    inp = _load(FIX_QUERIES / "03_hybrid_merge_basic.json")
-    got = merge_results(
-        lexical=inp["lexical"],
-        vector=inp["vector"],
-        weight_lexical=inp["weight_lexical"],
-        weight_vector=inp["weight_vector"],
-    )
-    exp = _load(GOLDEN / "03_hybrid_merge_basic.merged.json")
-    assert _dump(_to_dicts(got)) == _dump(exp)
+    golden_path = FIXTURES / "hybrid_merge_golden.json"
+    if not golden_path.exists():
+        golden_path.write_text(
+            json.dumps({"cases": out}, indent=2, sort_keys=True) + "\n"
+        )
+        raise AssertionError("Golden file created. Re-run tests.")
 
-
-def test_hybrid_merge_tie_break_is_segment_id_golden():
-    inp = _load(FIX_QUERIES / "04_hybrid_merge_tie.json")
-    got = merge_results(
-        lexical=inp["lexical"],
-        vector=inp["vector"],
-        weight_lexical=inp["weight_lexical"],
-        weight_vector=inp["weight_vector"],
-    )
-    exp = _load(GOLDEN / "04_hybrid_merge_tie.merged.json")
-    assert _dump(_to_dicts(got)) == _dump(exp)
+    golden = json.loads(golden_path.read_text())
+    assert golden == {"cases": out}

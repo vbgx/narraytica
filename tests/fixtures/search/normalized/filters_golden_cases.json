@@ -1,0 +1,28 @@
+{
+  "cases": [
+    {
+      "name": "trim_and_lower_language",
+      "query": "  hello ",
+      "limit": 20,
+      "offset": 0,
+      "mode": "lexical",
+      "filters": { "language": " FR " }
+    },
+    {
+      "name": "drop_empty_strings",
+      "query": "   ",
+      "limit": 20,
+      "offset": 0,
+      "mode": "lexical",
+      "filters": { "source": "   " }
+    },
+    {
+      "name": "date_range_ok",
+      "query": "",
+      "limit": 20,
+      "offset": 0,
+      "mode": "lexical",
+      "filters": { "date_from": "2026-01-01T00:00:00Z", "date_to": "2026-01-02T00:00:00Z" }
+    }
+  ]
+}
