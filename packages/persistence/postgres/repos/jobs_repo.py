@@ -232,3 +232,135 @@ class JobsRepo:
             (job_id,),
         )
         return [job_event_row_to_contract(r) for r in cur.fetchall()]
+
+    def claim_next_transcription_job(self) -> JsonObj | None:
+        """
+        FIFO-ish claim with SKIP LOCKED:
+        - select one queued transcription job
+        - mark running + started_at
+        - upsert job_runs attempt=1 to running
+        Returns minimal dict used by worker:
+        {id, video_id, type, status, payload}
+        """
+        sql_select = """
+        SELECT id, video_id, type, status, payload
+        FROM jobs
+        WHERE status = 'queued'
+          AND type IN ('transcription', 'transcribe')
+        ORDER BY queued_at ASC, created_at ASC
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1
+        """
+
+        sql_mark_running = """
+        UPDATE jobs
+        SET status = 'running',
+            started_at = COALESCE(started_at, now()),
+            updated_at = now()
+        WHERE id = %(job_id)s
+        """
+
+        sql_upsert_run = """
+        INSERT INTO job_runs (
+            id,
+            job_id,
+            attempt,
+            status,
+            started_at,
+            created_at,
+            updated_at
+        )
+        VALUES (%(id)s, %(job_id)s, 1, 'running', now(), now(), now())
+        ON CONFLICT (job_id, attempt) DO UPDATE SET
+            status = EXCLUDED.status,
+            started_at = COALESCE(job_runs.started_at, EXCLUDED.started_at),
+            updated_at = now()
+        """
+
+        try:
+            with transaction(self._conn):
+                cur = self._conn.cursor(row_factory=dict_row)
+                cur.execute(sql_select)
+                row = cur.fetchone()
+                if not row:
+                    return None
+
+                job_id = row["id"]
+                cur.execute(sql_mark_running, {"job_id": job_id})
+                cur.execute(
+                    sql_upsert_run,
+                    {"id": __import__("uuid").uuid4().hex, "job_id": job_id},
+                )
+
+                payload = row["payload"]
+                if payload is None:
+                    payload_obj: Any = {}
+                elif isinstance(payload, dict):
+                    payload_obj = payload
+                else:
+                    payload_obj = payload
+
+                return {
+                    "id": row["id"],
+                    "video_id": row["video_id"],
+                    "type": row["type"],
+                    "status": row["status"],
+                    "payload": payload_obj,
+                }
+        except psycopg.Error as e:
+            raise RetryableDbError(str(e)) from e
+
+    def mark_job_succeeded(self, *, job_id: str) -> None:
+        try:
+            with transaction(self._conn):
+                cur = self._conn.cursor()
+                cur.execute(
+                    """
+                    UPDATE jobs
+                    SET status = 'succeeded',
+                        finished_at = now(),
+                        updated_at = now()
+                    WHERE id = %(job_id)s
+                    """,
+                    {"job_id": job_id},
+                )
+                cur.execute(
+                    """
+                    UPDATE job_runs
+                    SET status = 'succeeded',
+                        finished_at = now(),
+                        updated_at = now()
+                    WHERE job_id = %(job_id)s AND attempt = 1
+                    """,
+                    {"job_id": job_id},
+                )
+        except psycopg.Error as e:
+            raise RetryableDbError(str(e)) from e
+
+    def mark_job_failed(self, *, job_id: str, error_message: str) -> None:
+        try:
+            with transaction(self._conn):
+                cur = self._conn.cursor()
+                cur.execute(
+                    """
+                    UPDATE jobs
+                    SET status = 'failed',
+                        finished_at = now(),
+                        updated_at = now()
+                    WHERE id = %(job_id)s
+                    """,
+                    {"job_id": job_id},
+                )
+                cur.execute(
+                    """
+                    UPDATE job_runs
+                    SET status = 'failed',
+                        error_message = %(error_message)s,
+                        finished_at = now(),
+                        updated_at = now()
+                    WHERE job_id = %(job_id)s AND attempt = 1
+                    """,
+                    {"job_id": job_id, "error_message": error_message},
+                )
+        except psycopg.Error as e:
+            raise RetryableDbError(str(e)) from e

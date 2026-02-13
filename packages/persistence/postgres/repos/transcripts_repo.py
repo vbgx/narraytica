@@ -19,112 +19,83 @@ class TranscriptsRepo:
     def __init__(self, conn: psycopg.Connection):
         self._conn = conn
 
-    def create_transcript(self, transcript: JsonObj) -> JsonObj:
+    def upsert_transcript_by_artifact(
+        self,
+        *,
+        transcript: JsonObj,
+    ) -> None:
+        """
+        Worker-compatible UPSERT:
+        - matches partial unique index transcripts_unique_artifact
+          ON (video_id, artifact_key, version) WHERE artifact_key IS NOT NULL
+        - writes duration_seconds + storage_ref (added in 0011 + 0010)
+        - keeps legacy artifact_* columns for now (backward compat)
+        """
         try:
             with transaction(self._conn):
-                cur = self._conn.cursor(row_factory=dict_row)
+                cur = self._conn.cursor()
                 cur.execute(
                     """
                     INSERT INTO transcripts (
-                        id, tenant_id, video_id,
-                        provider, language, status,
-                        artifact_bucket, artifact_key, artifact_format,
-                        artifact_bytes, artifact_sha256,
-                        version, is_latest, metadata
-                    )
-                    VALUES (
-                        %(id)s, %(tenant_id)s, %(video_id)s,
-                        %(provider)s, %(language)s, %(status)s,
-                        %(artifact_bucket)s, %(artifact_key)s, %(artifact_format)s,
-                        %(artifact_bytes)s, %(artifact_sha256)s,
-                        %(version)s, %(is_latest)s, %(metadata)s
-                    )
-                    RETURNING
-                        id, tenant_id, video_id,
-                        provider, language, status,
-                        artifact_bucket, artifact_key, artifact_format,
-                        artifact_bytes, artifact_sha256,
-                        version, is_latest,
+                        id,
+                        tenant_id,
+                        video_id,
+                        provider,
+                        language,
+                        duration_seconds,
+                        status,
+                        artifact_bucket,
+                        artifact_key,
+                        artifact_format,
+                        artifact_bytes,
+                        artifact_sha256,
+                        version,
+                        is_latest,
                         metadata,
-                        created_at, updated_at
-                    """,
-                    transcript,
-                )
-                row = cur.fetchone()
-                assert row is not None
-                return transcript_row_to_contract(row)
-        except psycopg.errors.ForeignKeyViolation as e:
-            raise NotFound(str(e)) from e
-        except psycopg.errors.UniqueViolation as e:
-            raise Conflict(str(e)) from e
-        except psycopg.Error as e:
-            raise RetryableDbError(str(e)) from e
-
-    def upsert_transcript(self, transcript: JsonObj) -> JsonObj:
-        try:
-            with transaction(self._conn):
-                cur = self._conn.cursor(row_factory=dict_row)
-                cur.execute(
-                    """
-                    INSERT INTO transcripts (
-                        id, tenant_id, video_id,
-                        provider, language, status,
-                        artifact_bucket, artifact_key, artifact_format,
-                        artifact_bytes, artifact_sha256,
-                        version, is_latest, metadata
+                        storage_ref,
+                        created_at,
+                        updated_at
                     )
                     VALUES (
-                        %(id)s, %(tenant_id)s, %(video_id)s,
-                        %(provider)s, %(language)s, %(status)s,
-                        %(artifact_bucket)s, %(artifact_key)s, %(artifact_format)s,
-                        %(artifact_bytes)s, %(artifact_sha256)s,
-                        %(version)s, %(is_latest)s, %(metadata)s
+                        %(id)s,
+                        %(tenant_id)s,
+                        %(video_id)s,
+                        %(provider)s,
+                        %(language)s,
+                        %(duration_seconds)s,
+                        %(status)s,
+                        %(artifact_bucket)s,
+                        %(artifact_key)s,
+                        %(artifact_format)s,
+                        %(artifact_bytes)s,
+                        %(artifact_sha256)s,
+                        %(version)s,
+                        %(is_latest)s,
+                        %(metadata)s::jsonb,
+                        %(storage_ref)s::jsonb,
+                        now(),
+                        now()
                     )
-                    ON CONFLICT (id)
+                    ON CONFLICT (video_id, artifact_key, version)
+                    WHERE artifact_key IS NOT NULL
                     DO UPDATE SET
-                        tenant_id = COALESCE(
-                            EXCLUDED.tenant_id, transcripts.tenant_id
-                        ),
-                        video_id = EXCLUDED.video_id,
-                        provider = COALESCE(
-                            EXCLUDED.provider, transcripts.provider
-                        ),
-                        language = COALESCE(
-                            EXCLUDED.language, transcripts.language
-                        ),
+                        tenant_id = EXCLUDED.tenant_id,
+                        provider = EXCLUDED.provider,
+                        language = EXCLUDED.language,
+                        duration_seconds = EXCLUDED.duration_seconds,
                         status = EXCLUDED.status,
-                        artifact_bucket = COALESCE(
-                            EXCLUDED.artifact_bucket, transcripts.artifact_bucket
-                        ),
-                        artifact_key = COALESCE(
-                            EXCLUDED.artifact_key, transcripts.artifact_key
-                        ),
-                        artifact_format = COALESCE(
-                            EXCLUDED.artifact_format, transcripts.artifact_format
-                        ),
-                        artifact_bytes = COALESCE(
-                            EXCLUDED.artifact_bytes, transcripts.artifact_bytes
-                        ),
-                        artifact_sha256 = COALESCE(
-                            EXCLUDED.artifact_sha256, transcripts.artifact_sha256
-                        ),
-                        version = EXCLUDED.version,
+                        artifact_bucket = EXCLUDED.artifact_bucket,
+                        artifact_key = EXCLUDED.artifact_key,
+                        artifact_format = EXCLUDED.artifact_format,
+                        artifact_bytes = EXCLUDED.artifact_bytes,
+                        artifact_sha256 = EXCLUDED.artifact_sha256,
                         is_latest = EXCLUDED.is_latest,
-                        metadata = transcripts.metadata || EXCLUDED.metadata
-                    RETURNING
-                        id, tenant_id, video_id,
-                        provider, language, status,
-                        artifact_bucket, artifact_key, artifact_format,
-                        artifact_bytes, artifact_sha256,
-                        version, is_latest,
-                        metadata,
-                        created_at, updated_at
+                        metadata = EXCLUDED.metadata,
+                        storage_ref = EXCLUDED.storage_ref,
+                        updated_at = now()
                     """,
                     transcript,
                 )
-                row = cur.fetchone()
-                assert row is not None
-                return transcript_row_to_contract(row)
         except psycopg.errors.ForeignKeyViolation as e:
             raise NotFound(str(e)) from e
         except psycopg.errors.UniqueViolation as e:
@@ -141,6 +112,8 @@ class TranscriptsRepo:
                 provider, language, status,
                 artifact_bucket, artifact_key, artifact_format,
                 artifact_bytes, artifact_sha256,
+                storage_ref,
+                duration_seconds,
                 version, is_latest,
                 metadata,
                 created_at, updated_at
