@@ -22,31 +22,53 @@ JsonObj = dict[str, Any]
 
 class JobsRepo:
     """
-    Postgres implementation for Jobs / JobRuns / JobEvents.
+    Postgres implementation for jobs / job_runs / job_events.
 
-    Returns dicts aligned with contracts.
+    Aligned with packages/db/migrations/0009_jobs.sql.
     """
 
     def __init__(self, conn: psycopg.Connection):
         self._conn = conn
 
     def create_job(self, job: JsonObj) -> JsonObj:
+        """
+        Required keys (schema-aligned):
+        - id, video_id, type, status
+        Optional:
+        - payload, idempotency_key, tenant_id,
+          transcript_id, segment_id, layer_id,
+          queued_at, started_at, finished_at
+        """
         try:
             with transaction(self._conn):
                 cur = self._conn.cursor(row_factory=dict_row)
                 cur.execute(
                     """
                     INSERT INTO jobs (
-                        id, kind, status,
-                        created_at, updated_at, payload
+                        id, video_id, type, status,
+                        payload,
+                        idempotency_key,
+                        tenant_id,
+                        transcript_id, segment_id, layer_id,
+                        queued_at, started_at, finished_at
                     )
                     VALUES (
-                        %(id)s, %(kind)s, %(status)s,
-                        %(created_at)s, %(updated_at)s, %(payload)s
+                        %(id)s, %(video_id)s, %(type)s, %(status)s,
+                        COALESCE(%(payload)s, '{}'::jsonb),
+                        %(idempotency_key)s,
+                        %(tenant_id)s,
+                        %(transcript_id)s, %(segment_id)s, %(layer_id)s,
+                        COALESCE(%(queued_at)s, now()),
+                        %(started_at)s, %(finished_at)s
                     )
                     RETURNING
-                        id, kind, status,
-                        created_at, updated_at, payload
+                        id, video_id, type, status,
+                        payload,
+                        idempotency_key,
+                        tenant_id,
+                        transcript_id, segment_id, layer_id,
+                        queued_at, started_at, finished_at,
+                        created_at, updated_at
                     """,
                     job,
                 )
@@ -55,6 +77,8 @@ class JobsRepo:
                 return job_row_to_contract(row)
         except psycopg.errors.UniqueViolation as e:
             raise Conflict(str(e)) from e
+        except psycopg.errors.ForeignKeyViolation as e:
+            raise NotFound(str(e)) from e
         except psycopg.Error as e:
             raise RetryableDbError(str(e)) from e
 
@@ -63,8 +87,13 @@ class JobsRepo:
         cur.execute(
             """
             SELECT
-                id, kind, status,
-                created_at, updated_at, payload
+                id, video_id, type, status,
+                payload,
+                idempotency_key,
+                tenant_id,
+                transcript_id, segment_id, layer_id,
+                queued_at, started_at, finished_at,
+                created_at, updated_at
             FROM jobs
             WHERE id = %s
             """,
@@ -75,6 +104,29 @@ class JobsRepo:
             raise NotFound(f"job not found: {job_id}")
         return job_row_to_contract(row)
 
+    def get_job_by_idempotency_key(self, idempotency_key: str) -> JsonObj:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            SELECT
+                id, video_id, type, status,
+                payload,
+                idempotency_key,
+                tenant_id,
+                transcript_id, segment_id, layer_id,
+                queued_at, started_at, finished_at,
+                created_at, updated_at
+            FROM jobs
+            WHERE idempotency_key = %s
+            LIMIT 1
+            """,
+            (idempotency_key,),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise NotFound(f"job not found for idempotency_key: {idempotency_key}")
+        return job_row_to_contract(row)
+
     def create_job_run(self, job_run: JsonObj) -> JsonObj:
         try:
             with transaction(self._conn):
@@ -83,15 +135,23 @@ class JobsRepo:
                     """
                     INSERT INTO job_runs (
                         id, job_id, attempt, status,
-                        started_at, finished_at, meta
+                        started_at, finished_at,
+                        error_code, error_message, error_details, error_correlation_id,
+                        metadata
                     )
                     VALUES (
                         %(id)s, %(job_id)s, %(attempt)s, %(status)s,
-                        %(started_at)s, %(finished_at)s, %(meta)s
+                        %(started_at)s, %(finished_at)s,
+                        %(error_code)s, %(error_message)s,
+                        %(error_details)s, %(error_correlation_id)s,
+                        COALESCE(%(metadata)s, '{}'::jsonb)
                     )
                     RETURNING
                         id, job_id, attempt, status,
-                        started_at, finished_at, meta
+                        started_at, finished_at,
+                        error_code, error_message, error_details, error_correlation_id,
+                        metadata,
+                        created_at, updated_at
                     """,
                     job_run,
                 )
@@ -109,21 +169,21 @@ class JobsRepo:
         try:
             with transaction(self._conn):
                 _ = self.get_job(job_id)
-
                 cur = self._conn.cursor(row_factory=dict_row)
                 cur.execute(
                     """
                     INSERT INTO job_events (
-                        id, job_id, kind,
-                        occurred_at, payload
+                        id, job_id, run_id,
+                        event_type, payload
                     )
                     VALUES (
-                        %(id)s, %(job_id)s, %(kind)s,
-                        %(occurred_at)s, %(payload)s
+                        %(id)s, %(job_id)s, %(run_id)s,
+                        %(event_type)s, COALESCE(%(payload)s, '{}'::jsonb)
                     )
                     RETURNING
-                        id, job_id, kind,
-                        occurred_at, payload
+                        id, job_id, run_id,
+                        event_type, payload,
+                        created_at
                     """,
                     {**event, "job_id": job_id},
                 )
@@ -144,7 +204,10 @@ class JobsRepo:
             """
             SELECT
                 id, job_id, attempt, status,
-                started_at, finished_at, meta
+                started_at, finished_at,
+                error_code, error_message, error_details, error_correlation_id,
+                metadata,
+                created_at, updated_at
             FROM job_runs
             WHERE job_id = %s
             ORDER BY attempt ASC
@@ -159,11 +222,12 @@ class JobsRepo:
         cur.execute(
             """
             SELECT
-                id, job_id, kind,
-                occurred_at, payload
+                id, job_id, run_id,
+                event_type, payload,
+                created_at
             FROM job_events
             WHERE job_id = %s
-            ORDER BY occurred_at ASC, id ASC
+            ORDER BY created_at ASC, id ASC
             """,
             (job_id,),
         )

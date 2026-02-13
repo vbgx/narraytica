@@ -4,8 +4,7 @@ import tempfile
 import time
 from typing import Any
 
-from db.jobs import create_or_get_transcription_job
-from db.videos import persist_video_metadata
+from db_facade import create_or_get_transcription_job, persist_video_metadata
 from media.audio import extract_audio_wav_16k_mono
 from metadata.ffprobe import probe_media
 from metadata.normalize import normalize_video_metadata
