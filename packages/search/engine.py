@@ -1,48 +1,61 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol
 
 from .errors import BackendUnavailable
 from .filters import normalize_query
-from .ranking import MergeWeights, merge_hybrid_items
+from .ports import (
+    HybridMergePort,
+    LexicalSearchPort,
+    SearchQueryNormalized,
+    VectorSearchPort,
+)
+from .ranking import MergeWeights, merge_hybrid
 from .types import SearchItem, SearchPage, SearchQuery, SearchResult
 
 
-class LexicalPort(Protocol):
-    def search_lexical(self, query: SearchQuery) -> Sequence[SearchItem]: ...
+@dataclass
+class DefaultHybridMerger(HybridMergePort):
+    weights: MergeWeights = MergeWeights()
 
-
-class SemanticPort(Protocol):
-    def search_semantic(self, query: SearchQuery) -> Sequence[SearchItem]: ...
+    def merge(self, *, q: SearchQueryNormalized, lexical, vector) -> list[SearchItem]:
+        # Pure merge; pagination handled by engine.
+        return merge_hybrid(lexical=lexical, vector=vector, weights=self.weights)
 
 
 @dataclass
 class SearchEngine:
     """
-    Canonical SearchEngine API (contracts-first).
+    Canonical SearchEngine (contracts-first).
 
     Invariants:
-    - No HTTP exceptions
-    - No backend clients imported
+    - No HTTP
+    - No backend clients
     - Uses ports only
     """
 
-    lexical: LexicalPort | None = None
-    semantic: SemanticPort | None = None
-    weights: MergeWeights = MergeWeights()
+    lexical: LexicalSearchPort | None = None
+    vector: VectorSearchPort | None = None
+    merger: HybridMergePort | None = None
 
     def search(self, query: SearchQuery) -> SearchResult:
-        q = normalize_query(query)
+        q0 = normalize_query(query)
+        mode = q0.mode or "hybrid"
 
-        mode = q.mode or "hybrid"
+        q = SearchQueryNormalized(
+            query=q0.query,
+            limit=q0.limit,
+            offset=q0.offset,
+            mode=mode,
+            filters=q0.filters,
+        )
 
         if mode == "lexical":
             if self.lexical is None:
                 raise BackendUnavailable("lexical backend not configured")
-            items = list(self.lexical.search_lexical(q))
-            total = len(items)
+            lex = self.lexical.search_lexical(q)
+            items = [h.item for h in lex.hits]
+            total = lex.total if lex.total is not None else len(items)
             sliced = items[q.offset : q.offset + q.limit]
             return SearchResult(
                 items=list(sliced),
@@ -50,10 +63,12 @@ class SearchEngine:
             )
 
         if mode == "semantic":
-            if self.semantic is None:
-                raise BackendUnavailable("semantic backend not configured")
-            items = list(self.semantic.search_semantic(q))
-            total = len(items)
+            # Contract naming: schema uses "semantic" as mode; port is "vector".
+            if self.vector is None:
+                raise BackendUnavailable("vector backend not configured")
+            vec = self.vector.search_vector(q)
+            items = [h.item for h in vec.hits]
+            total = vec.total if vec.total is not None else len(items)
             sliced = items[q.offset : q.offset + q.limit]
             return SearchResult(
                 items=list(sliced),
@@ -61,19 +76,18 @@ class SearchEngine:
             )
 
         # hybrid
-        if self.lexical is None or self.semantic is None:
+        if self.lexical is None or self.vector is None:
             raise BackendUnavailable(
-                "hybrid mode requires both lexical and semantic backends"
+                "hybrid mode requires both lexical and vector backends"
             )
 
-        lex = list(self.lexical.search_lexical(q))
-        sem = list(self.semantic.search_semantic(q))
+        lex = self.lexical.search_lexical(q)
+        vec = self.vector.search_vector(q)
 
-        merged_all = merge_hybrid_items(lex, sem, weights=self.weights)
+        merger = self.merger or DefaultHybridMerger()
+        merged_all = merger.merge(q=q, lexical=lex, vector=vec)
 
-        total = len(
-            merged_all
-        )  # V1 allows total null; we provide deterministic union count
+        total = len(merged_all)
         sliced = merged_all[q.offset : q.offset + q.limit]
         return SearchResult(
             items=list(sliced),

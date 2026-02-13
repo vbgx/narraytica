@@ -127,7 +127,7 @@ Risques & mitigation
 Interfaces trop proches des backends
 → types intermédiaires simples, pas de DSL OpenSearch/Qdrant dans les ports.
 
-Issue 3.3 — Migrer la sémantique des filtres vers packages/search/filters.py (single truth)
+## Issue 3.3 — Migrer la sémantique des filtres vers packages/search/filters.py (single truth)
 
 Title: refactor(search): migrate filter semantics into packages/search (single source of truth)
 Labels: refactor, search, drift
@@ -176,7 +176,7 @@ Risques & mitigation
 Breaking change masqué
 → golden tests = “contrat produit”, update snapshot = décision explicite.
 
-Issue 3.4 — Migrer hybrid merge / ranking vers packages/search/ranking.py
+## Issue 3.4 — Migrer hybrid merge / ranking vers packages/search/ranking.py
 
 Title: refactor(search): migrate hybrid merge + ranking into packages/search/ranking.py
 Labels: refactor, search, ranking

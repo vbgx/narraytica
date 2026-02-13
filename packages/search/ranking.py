@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from dataclasses import dataclass
 
+from .ports import LexicalResult, VectorResult
 from .types import SearchItem, SearchScore
 
 
@@ -12,63 +12,67 @@ class MergeWeights:
     vector: float = 0.5
 
 
-def merge_hybrid_items(
-    lexical_items: Iterable[SearchItem],
-    semantic_items: Iterable[SearchItem],
+def merge_hybrid(
     *,
+    lexical: LexicalResult,
+    vector: VectorResult,
     weights: MergeWeights | None = None,
 ) -> list[SearchItem]:
-    """
-    Deterministic hybrid merge at the item level.
-
-    Rules:
-    - Dedup by segment.id
-    - combined = wL*lex + wV*vec (missing = 0)
-    - Stable tie-break: combined desc, then segment.id asc
-    """
     if weights is None:
         weights = MergeWeights()
 
-    by_seg: dict[str, tuple[float | None, float | None, SearchItem]] = {}
+    by_id: dict[
+        str,
+        tuple[
+            float | None,
+            float | None,
+            SearchItem,
+            int | None,
+            int | None,
+        ],
+    ] = {}
 
-    def _take(
-        item: SearchItem,
-        *,
-        lexical: float | None,
-        vector: float | None,
-    ) -> None:
-        sid = item.segment.id
-        prev = by_seg.get(sid)
+    def take_from_lex(h) -> None:
+        sid = h.item.segment.id
+        prev = by_id.get(sid)
         if prev is None:
-            by_seg[sid] = (lexical, vector, item)
+            by_id[sid] = (h.score_lexical, None, h.item, h.lexical_rank, None)
             return
 
-        pl, pv, base = prev
-        nl = lexical if lexical is not None else pl
-        nv = vector if vector is not None else pv
-        by_seg[sid] = (nl, nv, base)
-
-    for it in lexical_items:
-        _take(
-            it,
-            lexical=(
-                it.score.lexical if it.score.lexical is not None else it.score.combined
-            ),
-            vector=None,
+        lex, vec, base, lr, vr = prev
+        by_id[sid] = (
+            h.score_lexical if lex is None else lex,
+            vec,
+            base,
+            lr or h.lexical_rank,
+            vr,
         )
 
-    for it in semantic_items:
-        _take(
-            it,
-            lexical=None,
-            vector=(
-                it.score.vector if it.score.vector is not None else it.score.combined
-            ),
+    def take_from_vec(h) -> None:
+        sid = h.item.segment.id
+        prev = by_id.get(sid)
+        if prev is None:
+            by_id[sid] = (None, h.score_vector, h.item, None, h.vector_rank)
+            return
+
+        lex, vec, base, lr, vr = prev
+        by_id[sid] = (
+            lex,
+            h.score_vector if vec is None else vec,
+            base,
+            lr,
+            vr or h.vector_rank,
         )
+
+    for h in lexical.hits:
+        take_from_lex(h)
+
+    for h in vector.hits:
+        take_from_vec(h)
 
     merged: list[SearchItem] = []
 
-    for _sid, (lex, vec, base) in by_seg.items():
+    for _sid, (lex, vec, base, lr, vr) in by_id.items():
         lex_v = float(lex or 0.0)
         vec_v = float(vec or 0.0)
         combined = (weights.lexical * lex_v) + (weights.vector * vec_v)
@@ -83,8 +87,8 @@ def merge_hybrid_items(
                     combined=float(combined),
                     lexical=float(lex_v) if lex is not None else None,
                     vector=float(vec_v) if vec is not None else None,
-                    lexical_rank=base.score.lexical_rank,
-                    vector_rank=base.score.vector_rank,
+                    lexical_rank=lr,
+                    vector_rank=vr,
                 ),
             )
         )
