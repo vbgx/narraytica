@@ -3,10 +3,10 @@ from __future__ import annotations
 import socket
 from typing import Any
 
-import psycopg
 from fastapi import APIRouter, Response, status
 
 from ..config import settings
+from ..wiring.health import check_postgres
 
 router = APIRouter(prefix="/health", tags=["health"])
 
@@ -41,14 +41,10 @@ def health(resp: Response) -> dict[str, Any]:
 
     try:
         if settings.api_database_url:
-            dsn = settings.api_database_url.replace(
-                "postgresql+psycopg://", "postgresql://"
-            )
-            with psycopg.connect(dsn, connect_timeout=1) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT 1;")
-                    cur.fetchone()
-            out["db"] = "ok"
+            out["db"] = "ok" if check_postgres() else "error"
+            if out["db"] != "ok":
+                out["status"] = "degraded"
+                resp.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         else:
             out["db"] = "skipped"
     except Exception as e:
