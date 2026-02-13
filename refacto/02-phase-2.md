@@ -181,7 +181,7 @@ Risques & mitigation
 Régression sémantique invisible
 → golden tests + fixtures réalistes.
 
-Issue 2.4 — Extraction JOBS: routes → use_case.jobs + normalisation events
+## Issue 2.4 — Extraction JOBS: routes → use_case.jobs + normalisation events
 
 Title: refactor(jobs): move jobs orchestration into application use-case (no behavior change)
 Labels: refactor, jobs, application-layer

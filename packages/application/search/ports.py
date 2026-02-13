@@ -1,27 +1,33 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Protocol
 
 
-@dataclass(frozen=True)
-class VectorHit:
-    segment_id: str
-    score: float
-
-
-class SearchInfraPort(Protocol):
-    def opensearch_search(
-        self, body: dict[str, Any]
+class LexicalSearchPort(Protocol):
+    def search(
+        self, *, body: dict[str, Any]
     ) -> tuple[
-        list[dict[str, Any]],
-        dict[str, dict],
-        dict[str, Any],
-        dict[str, list[dict[str, Any]]],
+        list[dict[str, Any]],  # lexical hits
+        dict[str, dict],  # sources by id
+        dict[str, Any],  # lexical_scores by id
+        dict[str, list[dict[str, Any]]],  # highlights already contract-shaped
     ]: ...
 
-    def opensearch_mget(self, ids: list[str]) -> dict[str, dict]: ...
 
-    def vector_search(
+class SegmentsPort(Protocol):
+    def mget(self, *, ids: list[str]) -> dict[str, dict]: ...
+
+
+class VectorSearchPort(Protocol):
+    def search(
         self, *, query_text: str, filters: dict | None, top_k: int
-    ) -> list[VectorHit]: ...
+    ) -> list[dict[str, Any]]: ...
+
+
+class MergePort(Protocol):
+    def merge(
+        self,
+        *,
+        lexical: list[dict[str, Any]] | None,
+        vector: list[dict[str, Any]] | None,
+    ): ...
