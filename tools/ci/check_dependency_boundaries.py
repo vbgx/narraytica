@@ -60,9 +60,6 @@ def _path_matches_any(rel: str, globs: list[str]) -> bool:
 
 
 def _import_matches_pattern(import_name: str, pattern: str) -> bool:
-    # Pattern supports:
-    # - exact: "fastapi"
-    # - prefix: "services.api.src.search.*"
     if pattern.endswith(".*"):
         base = pattern[:-2]
         return import_name == base or import_name.startswith(f"{base}.")
@@ -76,29 +73,15 @@ def _read_allowlist(path: Path) -> list[AllowItem]:
     raw = _load_yaml(path) or []
     out: list[AllowItem] = []
 
-    for i, item in enumerate(raw):
-        if not isinstance(item, dict):
-            raise RuntimeError(f"Allowlist item #{i} must be a mapping")
-
-        expires_raw = item.get("expires_on")
-        owner_raw = item.get("owner")
-
-        expires_on = None
-        if expires_raw:
-            expires_on = str(expires_raw).strip()
-
-        owner = None
-        if owner_raw:
-            owner = str(owner_raw).strip()
-
+    for item in raw:
         out.append(
             AllowItem(
                 rule_id=str(item.get("rule_id", "")).strip(),
                 file=str(item.get("file", "")).strip(),
                 import_=str(item.get("import", "")).strip(),
                 reason=str(item.get("reason", "")).strip(),
-                expires_on=expires_on,
-                owner=owner,
+                expires_on=item.get("expires_on"),
+                owner=item.get("owner"),
             )
         )
 
@@ -112,23 +95,14 @@ def _fail_on_expired_allowlist(allow: list[AllowItem]) -> None:
     for a in allow:
         if not a.expires_on:
             continue
-        try:
-            if _parse_date_iso(a.expires_on) < today:
-                expired.append(a)
-        except Exception as err:
-            msg = (
-                f"Allowlist has invalid expires_on date: {a.expires_on!r} "
-                "(expected YYYY-MM-DD) "
-                f"for rule_id={a.rule_id} file={a.file} import={a.import_}"
-            )
-            raise RuntimeError(msg) from err
+        if _parse_date_iso(a.expires_on) < today:
+            expired.append(a)
 
     if expired:
         lines = ["Allowlist contains expired entries (CI must fail):"]
         for a in expired:
             lines.append(
-                "  - "
-                f"rule_id={a.rule_id} file={a.file} import={a.import_} "
+                f"  - rule_id={a.rule_id} file={a.file} import={a.import_} "
                 f"expires_on={a.expires_on} reason={a.reason}"
             )
         raise RuntimeError("\n".join(lines))
@@ -146,22 +120,13 @@ def _is_allowed(v: Violation, allow: list[AllowItem]) -> bool:
 
 
 def _collect_imports(py: Path) -> list[tuple[int, str]]:
-    """
-    Returns list of (lineno, imported_module_string).
-    Examples:
-      import fastapi -> "fastapi"
-      import fastapi.responses -> "fastapi.responses"
-      from fastapi import HTTPException -> "fastapi"
-      from services.api.src.search.engine import X -> "services.api.src.search.engine"
-    """
-    src = py.read_text(encoding="utf-8")
     try:
-        tree = ast.parse(src, filename=str(py))
+        tree = ast.parse(py.read_text(encoding="utf-8"))
     except SyntaxError:
-        # If a file is invalid Python, linters already catch it.
         return []
 
     out: list[tuple[int, str]] = []
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -169,6 +134,7 @@ def _collect_imports(py: Path) -> list[tuple[int, str]]:
         elif isinstance(node, ast.ImportFrom):
             if node.module:
                 out.append((node.lineno or 1, node.module))
+
     return out
 
 
@@ -192,7 +158,7 @@ def _load_rules(config_path: Path) -> list[Rule]:
 
 
 def _iter_py_files(root: Path) -> list[Path]:
-    ignored_dirnames = {
+    ignored = {
         ".git",
         ".venv",
         "node_modules",
@@ -206,9 +172,10 @@ def _iter_py_files(root: Path) -> list[Path]:
 
     out: list[Path] = []
     for p in root.rglob("*.py"):
-        if set(p.parts) & ignored_dirnames:
+        if set(p.parts) & ignored:
             continue
         out.append(p)
+
     return out
 
 
@@ -244,6 +211,7 @@ def main(argv: list[str]) -> int:
             continue
 
         imports = _collect_imports(py)
+
         for lineno, mod in imports:
             for rule in applicable:
                 for forbidden in rule.forbidden_imports:
@@ -256,17 +224,10 @@ def main(argv: list[str]) -> int:
                             import_=forbidden,
                             message=f"Forbidden import '{mod}' (matched '{forbidden}')",
                         )
-                        if _is_allowed(v, allow):
-                            continue
-                        violations.append(v)
+                        if not _is_allowed(v, allow):
+                            violations.append(v)
 
     errors = [v for v in violations if v.severity.lower() == "error"]
-    warnings = [v for v in violations if v.severity.lower() == "warning"]
-
-    if warnings:
-        print("Dependency boundary warnings:")
-        for v in warnings:
-            print(f"  [{v.rule_id}] {v.file}:{v.lineno} -> {v.message}")
 
     if errors:
         print("Dependency boundary errors:")
@@ -276,7 +237,7 @@ def main(argv: list[str]) -> int:
         print(f"Today: {_today_iso()}")
         return 1
 
-    print("✅ dependency boundaries: OK")
+    print("dependency boundaries: OK")
     return 0
 
 

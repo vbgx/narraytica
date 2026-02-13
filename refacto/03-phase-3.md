@@ -214,7 +214,7 @@ Risques & mitigation
 Scores non comparables lexical vs vector
 → normaliser/scale + tests de non-régression.
 
-Issue 3.5 — Créer les adapters backends dans packages/search/adapters/* (OpenSearch/Qdrant)
+## Issue 3.5 — Créer les adapters backends dans packages/search/adapters/* (OpenSearch/Qdrant)
 
 Title: refactor(search): implement opensearch + qdrant adapters in packages/search/adapters
 Labels: refactor, search, adapters
@@ -253,7 +253,7 @@ Risques & mitigation
 Config mismatch (index mappings, analyzers)
 → templates versionnés + test “bootstrap idempotent” (voir issue 3.8).
 
-Issue 3.6 — API wiring: services/api consomme uniquement packages/search (plus de moteur interne)
+## Issue 3.6 — API wiring: services/api consomme uniquement packages/search (plus de moteur interne)
 
 Title: refactor(api): route/search uses packages/search engine via wiring (no api search impl)
 Labels: api, search, refactor
@@ -296,7 +296,7 @@ Risques & mitigation
 Imports résiduels dans tests
 → refactor tests à la fin + CI boundaries.
 
-Issue 3.7 — Worker indexer: consommer les adapters communs (plus de clients locaux)
+## Issue 3.7 — Worker indexer: consommer les adapters communs (plus de clients locaux)
 
 Title: refactor(workers): indexer uses packages/search adapters (no local opensearch/qdrant clients)
 Labels: workers, search, refactor
@@ -333,7 +333,7 @@ Risques & mitigation
 Indexing ≠ searching (APIs différentes)
 → autoriser un sous-module adapters/opensearch_index.py dédié, mais toujours dans packages.
 
-Issue 3.8 — Tests: E2E search + bootstrap idempotent + unit tests merge/filters
+## Issue 3.8 — Tests: E2E search + bootstrap idempotent + unit tests merge/filters
 
 Title: tests(search): add e2e + idempotent bootstrap + unit coverage (filters/merge/query build)
 Labels: tests, search, drift
