@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from packages.search.ranking import MergeWeights, merge_ranked_ids
+
 
 @dataclass(frozen=True)
 class HybridItem:
@@ -10,17 +12,6 @@ class HybridItem:
     score: float
     lexical_rank: int | None
     vector_rank: int | None
-
-
-def _rank_scores(ids: list[str]) -> dict[str, float]:
-    n = len(ids)
-    if n == 0:
-        return {}
-    out: dict[str, float] = {}
-    for i, sid in enumerate(ids):
-        rank = i + 1
-        out[sid] = (n - (rank - 1)) / n
-    return out
 
 
 def merge_results(
@@ -52,27 +43,25 @@ def merge_results(
             continue
         vec_ids.append(str(sid))
 
-    lex_norm = _rank_scores(lex_ids)
-    vec_norm = _rank_scores(vec_ids)
+    weights = MergeWeights(
+        lexical=float(weight_lexical),
+        vector=float(weight_vector),
+    )
 
-    union_ids = set(lex_ids) | set(vec_ids)
+    merged = merge_ranked_ids(
+        lexical_ids=lex_ids,
+        vector_ids=vec_ids,
+        weights=weights,
+    )
 
-    lex_rank_pos = {sid: i + 1 for i, sid in enumerate(lex_ids)}
-    vec_rank_pos = {sid: i + 1 for i, sid in enumerate(vec_ids)}
-
-    merged: list[HybridItem] = []
-    for sid in union_ids:
-        s = (weight_lexical * lex_norm.get(sid, 0.0)) + (
-            weight_vector * vec_norm.get(sid, 0.0)
-        )
-        merged.append(
+    out: list[HybridItem] = []
+    for x in merged:
+        out.append(
             HybridItem(
-                segment_id=sid,
-                score=float(s),
-                lexical_rank=lex_rank_pos.get(sid),
-                vector_rank=vec_rank_pos.get(sid),
+                segment_id=x.segment_id,
+                score=float(x.score),
+                lexical_rank=x.lexical_rank,
+                vector_rank=x.vector_rank,
             )
         )
-
-    merged.sort(key=lambda x: (-x.score, x.segment_id))
-    return merged
+    return out
