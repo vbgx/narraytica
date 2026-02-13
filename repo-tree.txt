@@ -59,6 +59,7 @@
 │   │   │   ├── opensearch.md
 │   │   │   └── segments.md
 │   │   └── search.md
+│   ├── commands.md
 │   ├── runbooks
 │   │   ├── README.md
 │   │   ├── backfills.md
@@ -127,6 +128,65 @@
 ├── node_modules
 ├── package.json
 ├── packages
+│   ├── application
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-313.pyc
+│   │   │   └── errors.cpython-313.pyc
+│   │   ├── contracts
+│   │   │   ├── __pycache__
+│   │   │   │   └── validate.cpython-313.pyc
+│   │   │   └── validate.py
+│   │   ├── errors.py
+│   │   ├── ingest
+│   │   │   ├── __pycache__
+│   │   │   │   ├── dtos.cpython-313.pyc
+│   │   │   │   ├── use_case.cpython-313.pyc
+│   │   │   │   └── validation.cpython-313.pyc
+│   │   │   ├── dtos.py
+│   │   │   ├── use_case.py
+│   │   │   └── validation.py
+│   │   ├── jobs
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── normalizers.cpython-313.pyc
+│   │   │   │   ├── ports.cpython-313.pyc
+│   │   │   │   └── use_case.cpython-313.pyc
+│   │   │   ├── dtos.py
+│   │   │   ├── normalizers.py
+│   │   │   ├── ports.py
+│   │   │   └── use_case.py
+│   │   ├── package.json
+│   │   ├── search
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   ├── dtos.cpython-313.pyc
+│   │   │   │   ├── hybrid_merge.cpython-313.pyc
+│   │   │   │   ├── ports.cpython-313.pyc
+│   │   │   │   └── use_case.cpython-313.pyc
+│   │   │   ├── dtos.py
+│   │   │   ├── hybrid_merge.py
+│   │   │   ├── ports.py
+│   │   │   └── use_case.py
+│   │   ├── src
+│   │   │   ├── dtos
+│   │   │   │   └── search_dto.ts
+│   │   │   ├── errors
+│   │   │   │   └── app_error.ts
+│   │   │   ├── index.ts
+│   │   │   ├── ports
+│   │   │   │   └── search_port.ts
+│   │   │   └── usecases
+│   │   │       └── search_usecase.ts
+│   │   ├── tests
+│   │   ├── tsconfig.json
+│   │   └── use_cases
+│   │       ├── __init__.py
+│   │       ├── _dtos.py
+│   │       ├── _schema_validation.py
+│   │       └── search_dtos.py
 │   ├── contracts
 │   │   ├── README.md
 │   │   ├── changelog.md
@@ -139,6 +199,7 @@
 │   │       ├── job_run.schema.json
 │   │       ├── layer_envelope.schema.json
 │   │       ├── search.schema.json
+│   │       ├── search_query.schema.json
 │   │       ├── segment.schema.json
 │   │       ├── speaker.schema.json
 │   │       ├── storage_ref.schema.json
@@ -161,6 +222,16 @@
 │   │   ├── schema.md
 │   │   ├── seeds
 │   │   └── views
+│   ├── domain
+│   │   ├── ingest
+│   │   │   ├── contracts.py
+│   │   │   └── validation.py
+│   │   └── search
+│   │       ├── __pycache__
+│   │       │   └── filters.cpython-313.pyc
+│   │       ├── filters.py
+│   │       ├── request.py
+│   │       └── response_v1.py
 │   ├── observability
 │   │   ├── README.md
 │   │   ├── alerts
@@ -280,11 +351,7 @@
 │   │   │   │   │   └── search_filters.cpython-313.pyc
 │   │   │   │   ├── ingestion_contract.py
 │   │   │   │   ├── ingestion_validation.py
-│   │   │   │   ├── job_event_response.py
 │   │   │   │   ├── job_response.py
-│   │   │   │   ├── job_run_response.py
-│   │   │   │   ├── search-request.py
-│   │   │   │   ├── search-response_v1.py
 │   │   │   │   └── search_filters.py
 │   │   │   ├── main.py
 │   │   │   ├── middleware
@@ -326,7 +393,9 @@
 │   │   │   ├── search
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── __pycache__
-│   │   │   │   │   └── __init__.cpython-313.pyc
+│   │   │   │   │   ├── __init__.cpython-313.pyc
+│   │   │   │   │   └── adapter.cpython-313.pyc
+│   │   │   │   ├── adapter.py
 │   │   │   │   ├── hybrid
 │   │   │   │   │   ├── __init__.py
 │   │   │   │   │   ├── __pycache__
@@ -340,6 +409,7 @@
 │   │   │   │   │   │   ├── bootstrap.cpython-313.pyc
 │   │   │   │   │   │   └── lexical_query.cpython-313.pyc
 │   │   │   │   │   ├── bootstrap.py
+│   │   │   │   │   ├── client.py
 │   │   │   │   │   └── lexical_query.py
 │   │   │   │   └── qdrant
 │   │   │   │       ├── __init__.py
@@ -355,11 +425,15 @@
 │   │   │   │   ├── __pycache__
 │   │   │   │   │   ├── db.cpython-313.pyc
 │   │   │   │   │   ├── idempotency.cpython-313.pyc
+│   │   │   │   │   ├── ingest_port.cpython-313.pyc
+│   │   │   │   │   ├── jobs_repo.cpython-313.pyc
 │   │   │   │   │   ├── segments_repo.cpython-313.pyc
 │   │   │   │   │   ├── speakers_repo.cpython-313.pyc
 │   │   │   │   │   └── transcripts_repo.cpython-313.pyc
 │   │   │   │   ├── db.py
 │   │   │   │   ├── idempotency.py
+│   │   │   │   ├── ingest_port.py
+│   │   │   │   ├── jobs_repo.py
 │   │   │   │   ├── segments_repo.py
 │   │   │   │   ├── speakers_repo.py
 │   │   │   │   ├── transcripts_repo.py
@@ -660,20 +734,37 @@
 │   │   ├── test_search_contract.py
 │   │   └── test_transcript_schema.py
 │   ├── fixtures
-│   │   └── contracts
-│   │       ├── job.min.json
-│   │       ├── job_event.sample.json
-│   │       ├── job_run.min.json
-│   │       ├── layer_result.sample.json
-│   │       ├── search_result.sample.json
-│   │       ├── segment.min.json
-│   │       ├── speaker.min.json
-│   │       ├── transcript.min.json
-│   │       └── video.min.json
+│   │   ├── contracts
+│   │   │   ├── job.min.json
+│   │   │   ├── job_event.sample.json
+│   │   │   ├── job_run.min.json
+│   │   │   ├── layer_result.sample.json
+│   │   │   ├── search_result.sample.json
+│   │   │   ├── segment.min.json
+│   │   │   ├── speaker.min.json
+│   │   │   ├── transcript.min.json
+│   │   │   └── video.min.json
+│   │   └── search
+│   │       ├── golden
+│   │       │   ├── 01_multilingual.lexical_query.json
+│   │       │   ├── 02_speaker_timewindow.lexical_query.json
+│   │       │   ├── 03_hybrid_merge_basic.merged.json
+│   │       │   └── 04_hybrid_merge_tie.merged.json
+│   │       └── queries
+│   │           ├── 01_multilingual.json
+│   │           ├── 02_speaker_timewindow.json
+│   │           ├── 03_hybrid_merge_basic.json
+│   │           └── 04_hybrid_merge_tie.json
 │   ├── integration
 │   │   └── README.md
-│   └── load
-│       └── README.md
+│   ├── load
+│   │   └── README.md
+│   └── unit
+│       ├── __pycache__
+│       │   ├── test_hybrid_merge_golden.cpython-313-pytest-9.0.2.pyc
+│       │   └── test_search_filters_golden.cpython-313-pytest-9.0.2.pyc
+│       ├── test_hybrid_merge_golden.py
+│       └── test_search_filters_golden.py
 ├── tools
 │   ├── README.md
 │   ├── benchmarks
@@ -681,6 +772,7 @@
 │   ├── ci
 │   │   ├── check_allowlist_policy.py
 │   │   ├── check_dependency_boundaries.py
+│   │   ├── check_no_api_domain_growth.py
 │   │   ├── check_no_schema_duplication.py
 │   │   ├── dependency_boundaries.yaml
 │   │   └── dependency_boundaries_allowlist.yaml
@@ -698,4 +790,4 @@
 ├── turbo.json
 └── uv.lock
 
-212 directories, 487 files
+238 directories, 553 files

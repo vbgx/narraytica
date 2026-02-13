@@ -1,108 +1,55 @@
-# Search — Narralytica Retrieval Layer
+# packages/search — Canonical Search (Single Source of Behavior)
 
-This package defines the **search infrastructure contracts and configurations** for Narralytica.
+## Purpose
 
-Search in Narralytica is **hybrid by design**:
-- Semantic search (vector similarity)
-- Lexical search (keyword / full-text)
-- Optional reranking
+This package is the **only** place where search product semantics live:
 
-Search indexes are **derived from the primary database**, not a source of truth.
+- Query normalization & filter semantics
+- Hybrid merge / ranking / tie-breaking
+- Core domain errors (non-HTTP)
+- Canonical core types aligned with JSON Schemas
 
----
+Everything else (API, workers) is **wiring + adapters**.
 
-## 🎯 Purpose
+## Where logic lives
 
-This package exists to:
+- `filters.py` — **single source of truth** for filter meaning + defaults + normalization
+- `ranking.py` — hybrid merge, scoring rules, deterministic tie-break
+- `engine.py` — orchestration using ports (backend-agnostic)
+- `types.py` — canonical types aligned with contracts
+- `errors.py` — canonical error surface (no HTTP)
 
-- Define how segments are indexed for retrieval
-- Configure OpenSearch (lexical search)
-- Configure Qdrant (vector search)
-- Document hybrid retrieval and reranking strategies
+## Contracts-first rule
 
-It ensures search behavior is **consistent, reproducible, and tunable**.
+`SearchQuery` and `SearchResult` must stay aligned with JSON Schemas in `packages/contracts/schemas/`.
 
----
+If a schema changes:
+1) update schema
+2) update `types.py` + `filters.py` (normalization)
+3) update golden tests
+4) only then update adapters
 
-## 📦 What’s Inside
+## Forbidden imports (anti-drift)
 
-| Folder / File | Purpose |
-|---------------|---------|
-| `opensearch/` | Lexical index settings, mappings, analyzers |
-| `qdrant/` | Vector collection configuration |
-| `reranking.md` | Strategy for reranking hybrid results |
-| `README.md` | Overview and contracts (this file) |
+This package MUST NOT import:
+- `fastapi` / `starlette` / any HTTP framework
+- `services.api` / `services.workers`
+- OpenSearch / Qdrant clients (adapters live outside, injected through ports)
 
----
+## How to add a filter (safe path)
 
-## 🔎 Search Architecture
+1) Update `packages/contracts/schemas/search_query.schema.json`
+2) Add field to `FilterSpec` (types.py)
+3) Implement normalization + validation in `filters.py`
+4) Add golden tests covering:
+   - normalization determinism
+   - unsupported values / bad ranges
+5) Update adapters to translate FilterSpec -> backend query
 
-Narralytica search works in layers:
+If you skip any step, you are creating drift.
 
-### 1️⃣ Vector Search (Semantic)
-- Uses embeddings of segments
-- Powered by Qdrant
-- Captures *meaning*, not exact wording
+## Determinism & drift prevention
 
-### 2️⃣ Lexical Search (Keyword)
-- Uses OpenSearch
-- Captures exact terms, names, and phrases
-- Language-specific analyzers improve matching
-
-### 3️⃣ Hybrid Retrieval
-- Combines semantic and lexical scores
-- Improves recall and precision
-- Can be reranked with lightweight models
-
----
-
-## 🧱 Indexing Philosophy
-
-Search indexes are:
-
-- **Derived data**
-- Rebuildable at any time
-- Not authoritative
-
-If an index is corrupted or outdated, it should be **reindexed**, not patched.
-
----
-
-## 🔄 Reindexing
-
-Reindexing may be required when:
-
-- Embedding models change
-- Mappings or analyzers change
-- Data corrections are applied
-- Performance tuning is needed
-
-Operational procedures for reindexing are documented in: ```docs/runbooks/backfills.md```
-
-
----
-
-## 🌍 Language Support
-
-OpenSearch analyzers may vary by language.
-Vector search is language-agnostic at the embedding level but still tied to language-specific preprocessing.
-
----
-
-## 🚫 What Does NOT Belong Here
-
-- API endpoints
-- Business logic
-- Database schema
-- Worker pipeline code
-
-This package defines **search configuration and strategy only**.
-
----
-
-## 📚 Related Documentation
-
-- Search architecture → `docs/architecture/search.md`
-- Data model → `docs/architecture/data-model.md`
-- API search endpoints → `services/api`
-- Contracts → `packages/contracts`
+- normalization sorts lists and strips empties
+- ranking tie-breaks deterministically on `(combined desc, id asc)`
+- pagination is expressed as `page.limit` + `page.offset` only

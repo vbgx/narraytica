@@ -23,7 +23,7 @@ services/workers/indexer/src/* (clients/opérations d’index)
 
 Verrouiller sémantique (filtres + merge hybrid + ranking) via tests unitaires + golden + e2e.
 
-Issue 3.1 — Définir l’API canonique : SearchEngine.search(SearchQuery) -> SearchResult
+# Issue 3.1 — Définir l’API canonique : SearchEngine.search(SearchQuery) -> SearchResult
 
 Title: refactor(search): define canonical SearchEngine API + core types (contracts-first)
 Labels: refactor, search, architecture, contracts
@@ -84,7 +84,7 @@ Risques & mitigation
 Trop de refacto d’un coup
 → commencer par “façade” + délégation temporaire à l’impl existante via ports.
 
-Issue 3.2 — Définir les ports : Lexical / Vector / HybridMerge (contrats d’infrastructure)
+# Issue 3.2 — Définir les ports : Lexical / Vector / HybridMerge (contrats d’infrastructure)
 
 Title: refactor(search): define ports for lexical/vector backends + hybrid merge contract
 Labels: refactor, search, ports
