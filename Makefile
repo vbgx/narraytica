@@ -1,64 +1,60 @@
-# ============================================================
-# Docs quality
-# ============================================================
+SHELL := /bin/bash
+.ONESHELL:
+.SHELLFLAGS := -euo pipefail -c
 
-.PHONY: docs-check
+OPENAPI_SPEC ?= packages/contracts/openapi.yaml
 
-docs-check:
-	@echo "⚠️ docs checks disabled"
+.PHONY: help \
+	ci-architecture ci-exceptions test-contracts \
+	check-schema-duplication check-openapi check-allowlist check-boundaries \
+	py-lint py-format-check node-lint
 
+help:
+	@echo "Targets:"
+	@echo "  make ci-architecture   # Phase 1+ gates"
+	@echo "  make ci-exceptions     # allowlist policy checks"
+	@echo "  make test-contracts    # contract tests only"
+	@echo "  make check-boundaries  # dependency boundaries only"
+	@echo "Variables:"
+	@echo "  OPENAPI_SPEC=<path>    # default: $(OPENAPI_SPEC)"
 
-# ============================================================
-# Contracts guardrails (anti-drift)
-# ============================================================
+ci-architecture: \
+	check-schema-duplication \
+	check-openapi \
+	check-allowlist \
+	test-contracts \
+	check-boundaries
 
-.PHONY: ci-contracts
-
-ci-contracts:
-	python3 tools/ci/check_no_schema_duplication.py
-
-
-# ============================================================
-# OpenAPI guardrails (anti-drift)
-# ============================================================
-
-.PHONY: ci-openapi
-
-OPENAPI_SPEC_JSON := packages/contracts/openapi.json
-
-ci-openapi:
-	@python3 -c "import json; json.load(open('$(OPENAPI_SPEC_JSON)', 'r', encoding='utf-8'))" >/dev/null
-	python3 tools/scripts/openapi_validate.py $(OPENAPI_SPEC_JSON)
-
-
-# ============================================================
-# Allowlist policy (drift-map enforcement)
-# ============================================================
-
-.PHONY: ci-exceptions
-
-ci-exceptions:
-	python3 tools/ci/check_allowlist_policy.py
-
-
-# ============================================================
-# Contract tests
-# ============================================================
-
-.PHONY: test-contracts
+ci-exceptions: check-allowlist
 
 test-contracts:
-	uv run pytest -q tests/contract
+	pytest -q tests/contract
 
-
-# ============================================================
-# Architecture guardrails (global anti-drift gate)
-# ============================================================
-
-.PHONY: ci-architecture
-
-ci-architecture: ci-contracts ci-openapi ci-exceptions test-contracts
+check-boundaries:
 	uv run python tools/ci/check_dependency_boundaries.py \
-		--root . \
-		--config tools/ci/dependency_boundaries.yaml \
-		--allowlist tools/ci/dependency_boundaries_allowlist.yaml
+	  --root . \
+	  --config tools/ci/dependency_boundaries.yaml \
+	  --allowlist tools/ci/dependency_boundaries_allowlist.yaml
+
+check-schema-duplication:
+	uv run python tools/ci/check_no_schema_duplication.py
+
+check-openapi:
+	if [[ ! -f "$(OPENAPI_SPEC)" ]]; then \
+	  echo "ERROR: OPENAPI_SPEC not found: $(OPENAPI_SPEC)"; \
+	  echo "Set it like: make check-openapi OPENAPI_SPEC=packages/contracts/openapi.yaml"; \
+	  exit 2; \
+	fi
+	uv run python tools/scripts/openapi_validate.py "$(OPENAPI_SPEC)"
+
+check-allowlist:
+	uv run python tools/ci/check_allowlist_policy.py
+
+py-lint:
+	ruff check .
+
+py-format-check:
+	ruff format --check .
+
+node-lint:
+	pnpm -r lint

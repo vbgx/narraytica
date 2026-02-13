@@ -24,7 +24,7 @@ repos:
         pass_filenames: false
 
       - id: node-lint
-        name: node lint (pnpm -r lint)
+        name: node lint (skip if no lint script)
         entry: bash tools/scripts/precommit-node-lint.sh
         language: system
         pass_filenames: false

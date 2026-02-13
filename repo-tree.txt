@@ -50,9 +50,11 @@
 │   │   ├── README.md
 │   │   ├── api.md
 │   │   ├── data-model.md
+│   │   ├── drift-map.md
 │   │   ├── multi-tenancy.md
 │   │   ├── overview.md
 │   │   ├── pipelines.md
+│   │   ├── rules.md
 │   │   ├── search
 │   │   │   ├── opensearch.md
 │   │   │   └── segments.md
@@ -129,12 +131,13 @@
 │   │   ├── README.md
 │   │   ├── changelog.md
 │   │   ├── conventions.md
+│   │   ├── openapi.json
 │   │   ├── openapi.yaml
 │   │   └── schemas
 │   │       ├── job.schema.json
 │   │       ├── job_event.schema.json
 │   │       ├── job_run.schema.json
-│   │       ├── layer.schema.json
+│   │       ├── layer_envelope.schema.json
 │   │       ├── search.schema.json
 │   │       ├── segment.schema.json
 │   │       ├── speaker.schema.json
@@ -204,6 +207,17 @@
 ├── poetry.lock
 ├── pyproject.toml
 ├── pytest.ini
+├── refacto
+│   ├── 00-audit.md
+│   ├── 01-phase-1.md
+│   ├── 02-phase-2.md
+│   ├── 03-phase-3.md
+│   ├── 04-phase-4.md
+│   ├── 05-phase-5.md
+│   ├── 06-phase-6.md
+│   ├── 07-phase-7.md
+│   ├── 08-phase-8.md
+│   └── 10-arbo-cible.md
 ├── repo-tree.txt
 ├── services
 │   ├── __init__.py
@@ -260,13 +274,23 @@
 │   │   │   │   │   ├── __init__.cpython-313.pyc
 │   │   │   │   │   ├── ingestion_contract.cpython-313.pyc
 │   │   │   │   │   ├── ingestion_validation.cpython-313.pyc
+│   │   │   │   │   ├── job_event_response.cpython-313.pyc
+│   │   │   │   │   ├── job_response.cpython-313.pyc
+│   │   │   │   │   ├── job_run_response.cpython-313.pyc
 │   │   │   │   │   └── search_filters.cpython-313.pyc
 │   │   │   │   ├── ingestion_contract.py
 │   │   │   │   ├── ingestion_validation.py
+│   │   │   │   ├── job_event_response.py
+│   │   │   │   ├── job_response.py
+│   │   │   │   ├── job_run_response.py
+│   │   │   │   ├── search-request.py
+│   │   │   │   ├── search-response_v1.py
 │   │   │   │   └── search_filters.py
 │   │   │   ├── main.py
 │   │   │   ├── middleware
+│   │   │   │   ├── __init__.py
 │   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── __init__.cpython-313.pyc
 │   │   │   │   │   └── rate_limit.cpython-313.pyc
 │   │   │   │   └── rate_limit.py
 │   │   │   ├── narralytica_api.egg-info
@@ -316,10 +340,7 @@
 │   │   │   │   │   │   ├── bootstrap.cpython-313.pyc
 │   │   │   │   │   │   └── lexical_query.cpython-313.pyc
 │   │   │   │   │   ├── bootstrap.py
-│   │   │   │   │   ├── lexical_query.py
-│   │   │   │   │   └── templates
-│   │   │   │   │       ├── segments.template.json
-│   │   │   │   │       └── videos.template.json
+│   │   │   │   │   └── lexical_query.py
 │   │   │   │   └── qdrant
 │   │   │   │       ├── __init__.py
 │   │   │   │       ├── __pycache__
@@ -330,6 +351,19 @@
 │   │   │   │       ├── embeddings_client.py
 │   │   │   │       ├── filters.py
 │   │   │   │       └── vector_search.py
+│   │   │   ├── services
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   ├── db.cpython-313.pyc
+│   │   │   │   │   ├── idempotency.cpython-313.pyc
+│   │   │   │   │   ├── segments_repo.cpython-313.pyc
+│   │   │   │   │   ├── speakers_repo.cpython-313.pyc
+│   │   │   │   │   └── transcripts_repo.cpython-313.pyc
+│   │   │   │   ├── db.py
+│   │   │   │   ├── idempotency.py
+│   │   │   │   ├── segments_repo.py
+│   │   │   │   ├── speakers_repo.py
+│   │   │   │   ├── transcripts_repo.py
+│   │   │   │   └── videos_repo.py
 │   │   │   ├── storage
 │   │   │   ├── telemetry
 │   │   │   │   ├── __init__.py
@@ -350,25 +384,39 @@
 │   │   │   └── test_style.py
 │   │   ├── tests
 │   │   │   ├── __pycache__
+│   │   │   │   ├── conftest.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   ├── test_ingest.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   └── test_rate_limit.cpython-313-pytest-9.0.2.pyc
+│   │   │   ├── conftest.py
 │   │   │   ├── integration
 │   │   │   │   ├── __pycache__
 │   │   │   │   │   ├── conftest.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   │   ├── test_opensearch_bootstrap_idempotent.cpython-313-pytest-9.0.2.pyc
-│   │   │   │   │   └── test_search_e2e.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   │   ├── test_search_e2e.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   │   └── test_search_e2e.cpython-313.pyc
 │   │   │   │   ├── conftest.py
+│   │   │   │   ├── opensearch_seed.py
 │   │   │   │   ├── test_opensearch_bootstrap_idempotent.py
 │   │   │   │   └── test_search_e2e.py
+│   │   │   ├── jobs
+│   │   │   │   ├── __pycache__
+│   │   │   │   │   └── test_jobs_contract_response.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   └── test_jobs_contract_response.py
 │   │   │   ├── search
 │   │   │   │   ├── __pycache__
 │   │   │   │   │   ├── test_hybrid_merge.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   │   ├── test_lexical_query.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   │   ├── test_search_contract_response.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   │   ├── test_search_filters_v1.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   │   ├── test_search_response_stability.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   │   └── test_vector_search.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   ├── test_hybrid_merge.py
 │   │   │   │   ├── test_lexical_query.py
+│   │   │   │   ├── test_search_contract_response.py
 │   │   │   │   ├── test_search_filters_v1.py
+│   │   │   │   ├── test_search_response_stability.py
 │   │   │   │   └── test_vector_search.py
+│   │   │   ├── test_ingest.py
 │   │   │   └── test_rate_limit.py
 │   │   └── uv.lock
 │   ├── orchestrator
@@ -589,11 +637,39 @@
 │           └── tests
 ├── tests
 │   ├── README.md
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── __init__.cpython-313.pyc
 │   ├── contract
 │   │   ├── README.md
+│   │   ├── __init__.py
 │   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-313.pyc
+│   │   │   ├── _helpers.cpython-313.pyc
+│   │   │   ├── test_contracts_validate.cpython-313-pytest-9.0.2.pyc
+│   │   │   ├── test_entities_contract.cpython-313-pytest-9.0.2.pyc
+│   │   │   ├── test_jobs_contract.cpython-313-pytest-9.0.2.pyc
+│   │   │   ├── test_layer_contract.cpython-313-pytest-9.0.2.pyc
+│   │   │   ├── test_search_contract.cpython-313-pytest-9.0.2.pyc
 │   │   │   └── test_transcript_schema.cpython-313-pytest-9.0.2.pyc
+│   │   ├── _helpers.py
+│   │   ├── test_contracts_validate.py
+│   │   ├── test_entities_contract.py
+│   │   ├── test_jobs_contract.py
+│   │   ├── test_layer_contract.py
+│   │   ├── test_search_contract.py
 │   │   └── test_transcript_schema.py
+│   ├── fixtures
+│   │   └── contracts
+│   │       ├── job.min.json
+│   │       ├── job_event.sample.json
+│   │       ├── job_run.min.json
+│   │       ├── layer_result.sample.json
+│   │       ├── search_result.sample.json
+│   │       ├── segment.min.json
+│   │       ├── speaker.min.json
+│   │       ├── transcript.min.json
+│   │       └── video.min.json
 │   ├── integration
 │   │   └── README.md
 │   └── load
@@ -602,9 +678,14 @@
 │   ├── README.md
 │   ├── benchmarks
 │   │   └── README.md
+│   ├── ci
+│   │   ├── check_allowlist_policy.py
+│   │   ├── check_dependency_boundaries.py
+│   │   ├── check_no_schema_duplication.py
+│   │   ├── dependency_boundaries.yaml
+│   │   └── dependency_boundaries_allowlist.yaml
 │   ├── cli
-│   │   ├── README.md
-│   │   └── narralytica.py
+│   │   └── README.md
 │   ├── fixtures
 │   │   └── README.md
 │   └── scripts
@@ -617,4 +698,4 @@
 ├── turbo.json
 └── uv.lock
 
-204 directories, 414 files
+212 directories, 487 files
