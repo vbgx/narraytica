@@ -60,6 +60,11 @@
 │   │   │   └── segments.md
 │   │   └── search.md
 │   ├── commands.md
+│   ├── decisions
+│   │   └── ADR-000X-search-adapters-location.md
+│   ├── issues
+│   │   ├── 03.05-search-backend-adapters.md
+│   │   └── 03.07-worker-indexer-use-shared-infra-adapters.md
 │   ├── runbooks
 │   │   ├── README.md
 │   │   ├── backfills.md
@@ -429,12 +434,6 @@
 │   │   │   │   │   ├── __init__.cpython-313.pyc
 │   │   │   │   │   └── adapter.cpython-313.pyc
 │   │   │   │   ├── adapter.py
-│   │   │   │   ├── hybrid
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── __pycache__
-│   │   │   │   │   │   ├── __init__.cpython-313.pyc
-│   │   │   │   │   │   └── merge.cpython-313.pyc
-│   │   │   │   │   └── merge.py
 │   │   │   │   ├── opensearch
 │   │   │   │   │   ├── __init__.py
 │   │   │   │   │   ├── __pycache__
@@ -491,8 +490,9 @@
 │   │   │   ├── test_style.py
 │   │   │   └── wiring
 │   │   │       ├── __pycache__
-│   │   │       │   └── search.cpython-313.pyc
-│   │   │       └── search.py
+│   │   │       │   ├── search.cpython-313.pyc
+│   │   │       │   └── search_deps.cpython-313.pyc
+│   │   │       └── search_deps.py
 │   │   ├── tests
 │   │   │   ├── __pycache__
 │   │   │   │   ├── conftest.cpython-313-pytest-9.0.2.pyc
@@ -503,11 +503,14 @@
 │   │   │   │   ├── __pycache__
 │   │   │   │   │   ├── conftest.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   │   ├── test_opensearch_bootstrap_idempotent.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   │   ├── test_search_bootstrap_idempotent.cpython-313-pytest-9.0.2.pyc
+│   │   │   │   │   ├── test_search_bootstrap_idempotent.cpython-313.pyc
 │   │   │   │   │   ├── test_search_e2e.cpython-313-pytest-9.0.2.pyc
 │   │   │   │   │   └── test_search_e2e.cpython-313.pyc
 │   │   │   │   ├── conftest.py
 │   │   │   │   ├── opensearch_seed.py
 │   │   │   │   ├── test_opensearch_bootstrap_idempotent.py
+│   │   │   │   ├── test_search_bootstrap_idempotent.py
 │   │   │   │   └── test_search_e2e.py
 │   │   │   ├── jobs
 │   │   │   │   ├── __pycache__
@@ -531,6 +534,26 @@
 │   │   │   ├── test_ingest.py
 │   │   │   └── test_rate_limit.py
 │   │   └── uv.lock
+│   ├── infra
+│   │   └── search_backends
+│   │       ├── opensearch
+│   │       │   ├── __pycache__
+│   │       │   │   ├── bootstrap.cpython-313.pyc
+│   │       │   │   ├── http.cpython-313.pyc
+│   │       │   │   └── index_writer.cpython-313.pyc
+│   │       │   ├── bootstrap.py
+│   │       │   ├── http.py
+│   │       │   ├── index_writer.py
+│   │       │   └── templates
+│   │       │       └── segments-template-v1.json
+│   │       └── qdrant
+│   │           ├── __pycache__
+│   │           │   ├── embeddings_client.cpython-313.pyc
+│   │           │   ├── vector_search.cpython-313.pyc
+│   │           │   └── writer.cpython-313.pyc
+│   │           ├── embeddings_client.py
+│   │           ├── vector_search.py
+│   │           └── writer.py
 │   ├── orchestrator
 │   │   ├── README.md
 │   │   ├── activities
@@ -588,8 +611,12 @@
 │       │   │   ├── build_docs.py
 │       │   │   ├── db.py
 │       │   │   ├── opensearch
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   └── client.cpython-313.pyc
 │       │   │   │   └── client.py
 │       │   │   ├── qdrant
+│       │   │   │   ├── __pycache__
+│       │   │   │   │   └── client.cpython-313.pyc
 │       │   │   │   └── client.py
 │       │   │   └── worker.py
 │       │   └── tests
@@ -773,6 +800,8 @@
 │   │   │           │   └── dto
 │   │   │           │       └── search.py
 │   │   │           └── wiring
+│   │   │               ├── __pycache__
+│   │   │               │   └── search_engine.cpython-313-pytest-9.0.2.pyc
 │   │   │               └── search_engine.py
 │   │   ├── test_contracts_validate.py
 │   │   ├── test_entities_contract.py
@@ -798,7 +827,11 @@
 │   │       │   ├── 02_speaker_timewindow.lexical_query.json
 │   │       │   ├── 03_hybrid_merge_basic.merged.json
 │   │       │   └── 04_hybrid_merge_tie.merged.json
+│   │       ├── hybrid_merge_cases.json
+│   │       ├── hybrid_merge_golden.json
 │   │       ├── normalized
+│   │       │   ├── filters_golden.json
+│   │       │   ├── filters_golden_cases.json
 │   │       │   ├── multilang.json
 │   │       │   └── speaker_time_window.json
 │   │       └── queries
@@ -816,12 +849,16 @@
 │       ├── __pycache__
 │       │   ├── test_hybrid_merge_golden.cpython-313-pytest-9.0.2.pyc
 │       │   ├── test_hybrid_merge_ports.cpython-313-pytest-9.0.2.pyc
+│       │   ├── test_opensearch_query_builder.cpython-313-pytest-9.0.2.pyc
+│       │   ├── test_opensearch_query_builder.cpython-313.pyc
 │       │   ├── test_opensearch_query_building.cpython-313-pytest-9.0.2.pyc
 │       │   ├── test_qdrant_filter_building.cpython-313-pytest-9.0.2.pyc
 │       │   ├── test_search_filters_golden.cpython-313-pytest-9.0.2.pyc
+│       │   ├── test_search_filters_golden.cpython-313.pyc
 │       │   └── test_search_type_invariants.cpython-313-pytest-9.0.2.pyc
 │       ├── test_hybrid_merge_golden.py
 │       ├── test_hybrid_merge_ports.py
+│       ├── test_opensearch_query_builder.py
 │       ├── test_opensearch_query_building.py
 │       ├── test_qdrant_filter_building.py
 │       ├── test_search_filters_golden.py
@@ -852,4 +889,4 @@
 ├── turbo.json
 └── uv.lock
 
-250 directories, 603 files
+260 directories, 630 files

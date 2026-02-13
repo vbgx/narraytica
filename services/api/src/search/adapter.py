@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from services.infra.search_backends.opensearch.http import (
+    opensearch_mget,
+    opensearch_search,
+)
 from services.infra.search_backends.qdrant.vector_search import (
     VectorSearchError,
     vector_search,
@@ -19,3 +23,10 @@ def vector_search_safe(
         return [{"segment_id": x.segment_id, "score": x.score} for x in v]
     except VectorSearchError:
         return []
+
+
+__all__ = [
+    "opensearch_search",
+    "opensearch_mget",
+    "vector_search_safe",
+]
