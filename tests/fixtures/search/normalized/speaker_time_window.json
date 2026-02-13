@@ -1,0 +1,11 @@
+{
+  "query": "test",
+  "limit": 10,
+  "offset": 5,
+  "mode": "semantic",
+  "filters": {
+    "speaker_id": "spk_1",
+    "date_from": "2024-01-01T00:00:00Z",
+    "date_to": "2024-01-31T23:59:59Z"
+  }
+}

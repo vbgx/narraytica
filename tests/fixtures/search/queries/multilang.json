@@ -1,0 +1,7 @@
+{
+  "query": "  hello  ",
+  "filters": { "language": " FR " },
+  "limit": 20,
+  "offset": 0,
+  "mode": "hybrid"
+}
